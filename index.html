@@ -338,50 +338,51 @@ function parseBiasText(text){
   // Remove header lines
   var lines2=lines.filter(function(l){return!/^asian|^handicap|^draw no bet/i.test(l);});
 
-  // Auto-detect team abbreviations (uppercase letters followed by a digit)
+  // Auto-detect team labels — supports both "STU3.067" and "home3.067" and "Home3.067"
   var abbrevs=[];
   lines2.forEach(function(l){
-    var m=l.match(/^([A-Z]{2,5})\d/);
-    if(m&&abbrevs.indexOf(m[1])===-1)abbrevs.push(m[1]);
+    // Match any word prefix followed by a number (case insensitive)
+    var m=l.match(/^([A-Za-z]{2,6})(\d)/);
+    if(m){
+      var abbr=m[1];
+      if(abbrevs.indexOf(abbr)===-1)abbrevs.push(abbr);
+    }
   });
-  if(abbrevs.length<2){
-    // Try 3-letter at start
-    lines2.forEach(function(l){
-      var m=l.match(/^([A-Z]{2,4})\d/);
-      if(m&&abbrevs.indexOf(m[1])===-1)abbrevs.push(m[1]);
-    });
-  }
 
-  var homeAbbr=abbrevs[0]||'';
-  var awayAbbr=abbrevs[1]||'';
+  var homeAbbr=abbrevs[0]||'home';
+  var awayAbbr=abbrevs[1]||'away';
+  var homeLabel=homeAbbr;
+  var awayLabel=awayAbbr;
 
-  var result={homeAbbr:homeAbbr,awayAbbr:awayAbbr,lines:[]};
+  // If generic labels (home/away), use Home/Away as display
+  if(homeAbbr.toLowerCase()==='home')homeLabel='Heim';
+  if(awayAbbr.toLowerCase()==='away')awayLabel='Ausw.';
+
+  var result={homeAbbr:homeAbbr,awayAbbr:awayAbbr,homeLabel:homeLabel,awayLabel:awayLabel,lines:[]};
   var i=0;
   while(i<lines2.length){
     var l=lines2[i];
-    // Handicap line: starts with digit, +, or - followed by digit, no uppercase letters
-    if(/^[+\-]?\d/.test(l)&&!/[A-Z]/.test(l)){
+    // Handicap line: starts with digit, +, or - but has no letters
+    if(/^[+\-]?\d/.test(l)&&!/[A-Za-z]/.test(l)){
       var hc=normHC(l);
       var homeOdds=null,awayOdds=null;
       var j=i+1;
-      // Look ahead up to 3 lines for odds
       while(j<lines2.length&&j<=i+3){
         var lj=lines2[j];
-        // Stop if next handicap line
-        if(/^[+\-]?\d/.test(lj)&&!/[A-Z]/.test(lj))break;
-        if(homeAbbr){
-          var mH=lj.match(new RegExp('^'+homeAbbr+'(\\d+\\.\\d+)$'));
-          if(mH)homeOdds=parseFloat(mH[1]);
-        }
-        if(awayAbbr){
-          var mA=lj.match(new RegExp('^'+awayAbbr+'(\\d+\\.\\d+)$'));
-          if(mA)awayOdds=parseFloat(mA[1]);
-        }
+        if(/^[+\-]?\d/.test(lj)&&!/[A-Za-z]/.test(lj))break;
+        // Match home label (case insensitive)
+        var mH=lj.match(new RegExp('^'+homeAbbr+'(\\d+\\.\\d+)$','i'));
+        var mA=lj.match(new RegExp('^'+awayAbbr+'(\\d+\\.\\d+)$','i'));
+        if(mH)homeOdds=parseFloat(mH[1]);
+        if(mA)awayOdds=parseFloat(mA[1]);
         j++;
       }
-      // Only add if at least home odds found and valid
-      if(homeOdds&&homeOdds>1.01&&homeOdds<50){
-        result.lines.push({handicap:hc,homeOdds:homeOdds,awayOdds:(awayOdds&&awayOdds>1.01&&awayOdds<50)?awayOdds:null});
+      if(homeOdds&&homeOdds>1.001&&homeOdds<200){
+        result.lines.push({
+          handicap:hc,
+          homeOdds:homeOdds,
+          awayOdds:(awayOdds&&awayOdds>1.001&&awayOdds<200)?awayOdds:null
+        });
         i=j;
       } else {i++;}
     } else {i++;}
