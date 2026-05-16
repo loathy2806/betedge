@@ -99,10 +99,6 @@ table.stbl tr:hover td{background:var(--raised);}
 .sum-box .sv{font-size:1rem;font-weight:600;}
 .empty{text-align:center;padding:28px;color:var(--muted);font-size:.75rem;}
 hr{border:none;border-top:1px solid var(--border);margin:20px 0;}
-.ai-green{background:rgba(0,217,139,.15);border-left:3px solid var(--green);border-radius:3px;padding:4px 8px;font-size:.68rem;color:var(--green);margin-top:4px;line-height:1.5;}
-.ai-yellow{background:rgba(255,170,51,.15);border-left:3px solid var(--amber);border-radius:3px;padding:4px 8px;font-size:.68rem;color:var(--amber);margin-top:4px;line-height:1.5;}
-.ai-red{background:rgba(255,61,90,.15);border-left:3px solid var(--red);border-radius:3px;padding:4px 8px;font-size:.68rem;color:var(--red);margin-top:4px;line-height:1.5;}
-.ai-loading{background:var(--blue-dim);border-left:3px solid var(--blue);border-radius:3px;padding:4px 8px;font-size:.68rem;color:var(--blue);margin-top:4px;}
 </style>
 </head>
 <body>
@@ -626,85 +622,15 @@ function renderResults(rows,biaData,b365Data){
       +'<td id="diff_'+idx+'">'+diffStr+'</td>'
       +'<td id="ev_'+idx+'" style="'+evCol+';font-weight:700">'+ps(r.ev)+'</td>'
       +'<td id="rec_'+idx+'" style="color:var(--green)">'+(r.rec>0?eur(r.rec):'--')+'</td>'
-      +'<td id="sig_'+idx+'">'+signal+'<div id="ai_'+idx+'" style="display:none;"></div></td>'
+      +'<td id="sig_'+idx+'">'+signal+'</td>'
       +'<td>'+stakeWin+'</td>'
       +'<td><button class="btn btn-sm '+(r.isSuspect?'btn-red':'btn-ghost')+'" onclick="saveRow('+idx+')">'+(r.isSuspect?'⚠ Save':'Save')+'</button></td>'
       +'</tr>';
   });
 
-  setStatus('success','✓ Analyse abgeschlossen — '+valueBets.length+' Value Bets gefunden.'+(valueBets.length>0?' AI analysiert Value Bets...':''));
+  setStatus('success','✓ Analyse abgeschlossen — '+valueBets.length+' Value Bets gefunden.');
   document.getElementById('resultsSection').style.display='block';
   document.getElementById('resultsSection').scrollIntoView({behavior:'smooth',block:'start'});
-
-  // Auto-analyse value bets with AI
-  if(valueBets.length>0){
-    var matchName=rows.length>0?rows[0].matchName:'';
-    analyseValueBetsWithAI(valueBets, matchName);
-  }
-}
-
-async function analyseValueBetsWithAI(valueBets, matchName){
-  var apiKey=getKey();
-  if(!apiKey)return;
-
-  for(var i=0;i<valueBets.length;i++){
-    var bet=valueBets[i];
-    var rowIdx=_lastRows.indexOf(bet);
-    if(rowIdx===-1)continue;
-
-    var aiEl=document.getElementById('ai_'+rowIdx);
-    if(!aiEl)continue;
-    aiEl.style.display='block';
-    aiEl.className='ai-loading';
-    aiEl.innerHTML='<span class="spinner"></span> Analysiere...';
-
-    try{
-      var prompt='Du bist ein Sportwetten-Analyst. Analysiere diese Value Bet kurz auf Deutsch (max 2 Sätze):\n\n'
-        +'Spiel: '+matchName+'\n'
-        +'Wette: '+bet.side+' Asian Handicap '+bet.hc+'\n'
-        +'Betinasia Quote: '+bet.biaOdds.toFixed(3)+'\n'
-        +'Implizite Wahrscheinlichkeit: '+(bet.trueP*100).toFixed(1)+'%\n\n'
-        +'Suche aktuelle Form, Head-to-Head und bewerte ob diese Wette realistisch ist.\n'
-        +'Antworte mit: "🟢 Realistisch", "🟡 Neutral" oder "🔴 Riskant" gefolgt von einer kurzen Begründung.';
-
-      var resp=await fetch('https://api.anthropic.com/v1/messages',{
-        method:'POST',
-        headers:{
-          'Content-Type':'application/json',
-          'x-api-key':apiKey,
-          'anthropic-version':'2023-06-01',
-          'anthropic-dangerous-direct-browser-access':'true'
-        },
-        body:JSON.stringify({
-          model:'claude-haiku-4-5-20251001',
-          max_tokens:200,
-          tools:[{type:'web_search_20250305',name:'web_search'}],
-          messages:[{role:'user',content:prompt}]
-        })
-      });
-
-      if(!resp.ok)throw new Error('API Fehler');
-      var d=await resp.json();
-      var text='';
-      if(d.content)d.content.forEach(function(b){if(b.type==='text')text+=b.text;});
-      text=text.trim();
-
-      // Determine color based on emoji
-      var cls='ai-yellow';
-      if(text.includes('🟢'))cls='ai-green';
-      else if(text.includes('🔴'))cls='ai-red';
-
-      aiEl.className=cls;
-      aiEl.innerHTML=text||'Keine Analyse verfügbar.';
-
-    }catch(e){
-      aiEl.style.display='none';
-    }
-
-    // Small delay between requests
-    if(i<valueBets.length-1)await new Promise(function(r){setTimeout(r,500);});
-  }
-  setStatus('success','✓ Analyse abgeschlossen — '+valueBets.length+' Value Bets mit AI-Einschätzung.');
 }
 
 // ══ RECALC BIA (when Betinasia odds edited) ══
