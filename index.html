@@ -602,22 +602,28 @@ function renderResults(rows,biaData,b365Data){
         ?'<span class="vbadge">BET</span>'+(isBest?'<span class="bbadge">BEST</span>':'')
         :'<span class="nbadge">--</span>';
 
-    // Editable Bet365 field
-    var b365Input='<input type="number" id="b365e_'+idx+'" value="'+r.b365OddsEdit.toFixed(3)+'" step="0.01" min="1.01" style="width:82px;padding:3px 7px;font-size:.72rem;" onchange="recalcRow('+idx+',this.value)" title="Editierbar wenn Quote veraltet"/>';
+    // Editable Betinasia field (green = where you bet)
+    var biaInput='<input type="number" id="biae_'+idx+'" value="'+r.biaOdds.toFixed(3)+'" step="0.01" min="1.01" style="width:80px;padding:3px 7px;font-size:.72rem;color:var(--green);font-weight:600;border-color:rgba(0,217,139,.4);" onchange="recalcBia('+idx+',this.value)"/>';
+
+    // Editable Bet365 field (reference only)
+    var b365Input='<input type="number" id="b365e_'+idx+'" value="'+r.b365OddsEdit.toFixed(3)+'" step="0.01" min="1.01" style="width:80px;padding:3px 7px;font-size:.72rem;" onchange="recalcRow('+idx+',this.value)"/>';
+
+    // Stake + potential win
+    var stakeWin='<div style="display:flex;gap:5px;align-items:center;">'
+      +'<input type="number" id="stake_'+idx+'" placeholder="EUR" step="0.5" min="0.5" style="width:62px;padding:3px 6px;font-size:.72rem;" oninput="updateWin('+idx+')" />'
+      +'<span id="win_'+idx+'" style="font-size:.7rem;color:var(--green);white-space:nowrap;min-width:70px;">= --</span>'
+      +'</div>';
 
     tbody.innerHTML+='<tr id="row_'+idx+'" class="'+(r.isSuspect?'srow':r.hasValue?'vrow':'')+'">'
       +'<td style="font-weight:600;font-family:var(--mono)">'+r.hc+'</td>'
       +'<td>'+r.side+'</td>'
-      +'<td style="color:var(--green);font-weight:600">'+r.biaOdds.toFixed(3)+'</td>'
-      +'<td>'+b365Input+'<div style="font-size:.6rem;color:var(--muted);margin-top:2px;">Edit wenn veraltet</div></td>'
+      +'<td>'+biaInput+'<div style="font-size:.6rem;color:var(--green);margin-top:2px;">Bei BIA wetten</div></td>'
+      +'<td>'+b365Input+'<div style="font-size:.6rem;color:var(--muted);margin-top:2px;">Nur Referenz</div></td>'
       +'<td id="diff_'+idx+'">'+diffStr+'</td>'
       +'<td id="ev_'+idx+'" style="'+evCol+';font-weight:700">'+ps(r.ev)+'</td>'
       +'<td id="rec_'+idx+'" style="color:var(--green)">'+(r.rec>0?eur(r.rec):'--')+'</td>'
       +'<td id="sig_'+idx+'">'+signal+'</td>'
-      +'<td style="display:flex;gap:4px;padding:6px 10px;">'
-        +'<button class="btn btn-blue btn-sm" onclick="window.open(\'https://www.betinasia.com\',\'_blank\')">BIA ↗</button>'
-        +'<button class="btn btn-amber btn-sm" onclick="window.open(\'https://www.bet365.com\',\'_blank\')">B365 ↗</button>'
-      +'</td>'
+      +'<td>'+stakeWin+'</td>'
       +'<td><button class="btn btn-sm '+(r.isSuspect?'btn-red':'btn-ghost')+'" onclick="saveRow('+idx+')">'+(r.isSuspect?'⚠ Save':'Save')+'</button></td>'
       +'</tr>';
   });
@@ -625,6 +631,42 @@ function renderResults(rows,biaData,b365Data){
   setStatus('success','✓ Analyse abgeschlossen — '+valueBets.length+' Value Bets gefunden.');
   document.getElementById('resultsSection').style.display='block';
   document.getElementById('resultsSection').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ══ RECALC BIA (when Betinasia odds edited) ══
+function recalcBia(idx,newVal){
+  var r=_lastRows[idx];if(!r)return;
+  var newBia=parseFloat(newVal);
+  if(!newBia||newBia<=1||newBia>200)return;
+  r.biaOdds=newBia;
+  var ev=evPercent(r.trueP,newBia);
+  var bkr=r.bankroll||gv('bankroll');
+  var rec=bkr>0?recStakeCalc(bkr,r.trueP,newBia,r.kPct||gv('kellyPct'),r.maxCap||gv('maxCap')):null;
+  var diff=newBia-r.b365OddsEdit;
+  var isSuspect=Math.abs(ev)>gv('suspectThr')/100;
+  var hasValue=ev>=gv('minEV')/100&&!isSuspect;
+  r.ev=ev;r.rec=rec;r.diff=diff;r.hasValue=hasValue;r.isSuspect=isSuspect;
+  var diffStr=diff>0?'<span style="color:var(--green)">+'+diff.toFixed(3)+'</span>':'<span style="color:var(--red)">'+diff.toFixed(3)+'</span>';
+  document.getElementById('diff_'+idx).innerHTML=diffStr;
+  var evCol=isSuspect?'color:var(--red)':ev>0?'color:var(--green)':'color:var(--red)';
+  document.getElementById('ev_'+idx).innerHTML='<span style="'+evCol+';font-weight:700">'+ps(ev)+'</span>';
+  document.getElementById('rec_'+idx).textContent=rec>0?eur(rec):'--';
+  var sig=isSuspect?'<span class="sbadge">⚠ VERIFY</span>':hasValue?'<span class="vbadge">BET</span>':'<span class="nbadge">--</span>';
+  document.getElementById('sig_'+idx).innerHTML=sig;
+  document.getElementById('row_'+idx).className=isSuspect?'srow':hasValue?'vrow':'';
+  updateWin(idx);
+}
+
+// ══ UPDATE WIN ══
+function updateWin(idx){
+  var r=_lastRows[idx];if(!r)return;
+  var stakeEl=document.getElementById('stake_'+idx);
+  var winEl=document.getElementById('win_'+idx);
+  if(!stakeEl||!winEl)return;
+  var stake=parseFloat(stakeEl.value);
+  if(!stake||stake<=0){winEl.textContent='= --';return;}
+  var profit=stake*(r.biaOdds-1);
+  winEl.textContent='= +EUR '+profit.toFixed(2);
 }
 
 // ══ RECALC ROW (when B365 edited) ══
