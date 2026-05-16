@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>BetEdge — Value Finder</title>
+<style>
+:root{
+  --bg:#0e1015;--surface:#151820;--raised:#1c2030;--border:#252d40;--border2:#2e3a52;
+  --text:#dce3f0;--muted:#5a6a88;--faint:#2a3348;
+  --green:#00e5a0;--green-dim:rgba(0,229,160,.10);
+  --red:#ff4f6a;--red-dim:rgba(255,79,106,.10);
+  --amber:#ffb347;--amber-dim:rgba(255,179,71,.10);
+  --blue:#4ea8ff;--blue-dim:rgba(78,168,255,.10);
+  --mono:'Consolas','Courier New',monospace;
+  --sans:'Segoe UI','Helvetica Neue',Arial,sans-serif;
+  --r:6px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:13px;line-height:1.6;min-height:100vh;padding:24px 16px 60px;}
+header{max-width:1100px;margin:0 auto 24px;display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--border);padding-bottom:16px;}
+header h1{font-family:var(--sans);font-size:1.5rem;font-weight:700;color:var(--green);}
+header span{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;}
+.wrap{max-width:1100px;margin:0 auto;}
+.section-title{font-family:var(--sans);font-size:.7rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;margin-top:24px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;margin-bottom:12px;}
+.row{display:flex;gap:12px;flex-wrap:wrap;}
+.field{display:flex;flex-direction:column;gap:5px;flex:1;min-width:130px;}
+label{font-size:.67rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);}
+.hint-text{font-size:.67rem;color:var(--muted);font-style:italic;}
+input,select{background:var(--raised);border:1px solid var(--border2);border-radius:4px;color:var(--text);font-family:var(--mono);font-size:.85rem;padding:8px 10px;width:100%;transition:border-color .15s;-webkit-appearance:none;}
+input:focus,select:focus{outline:none;border-color:var(--green);}
+input::placeholder{color:var(--muted);}
+input[type="password"]{letter-spacing:.1em;}
+select option{background:var(--raised);}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border-radius:4px;font-family:var(--mono);font-size:.82rem;font-weight:600;cursor:pointer;border:1px solid transparent;transition:all .15s;white-space:nowrap;}
+.btn-green{background:var(--green);color:#0e1015;}
+.btn-green:hover{background:#33ffb8;}
+.btn-ghost{background:transparent;color:var(--muted);border-color:var(--border2);}
+.btn-ghost:hover{color:var(--text);border-color:var(--text);}
+.btn-red{background:transparent;color:var(--red);border-color:var(--red);}
+.btn-red:hover{background:var(--red-dim);}
+.btn-blue{background:transparent;color:var(--blue);border-color:var(--blue);}
+.btn-sm{padding:4px 10px;font-size:.72rem;}
+.key-row{display:flex;gap:8px;align-items:flex-end;}
+.key-row .field{flex:1;}
+.key-status{font-size:.72rem;padding:5px 10px;border-radius:3px;font-family:var(--mono);white-space:nowrap;}
+.key-status.ok{background:var(--green-dim);color:var(--green);}
+.key-status.missing{background:var(--amber-dim);color:var(--amber);}
+.spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(78,168,255,.3);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:5px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.status-box{border-radius:var(--r);padding:12px 16px;font-size:.82rem;margin-top:10px;display:none;}
+.status-box.loading{background:var(--blue-dim);border:1px solid rgba(78,168,255,.3);color:var(--blue);}
+.status-box.error{background:var(--red-dim);border:1px solid rgba(255,79,106,.3);color:var(--red);}
+.status-box.success{background:var(--green-dim);border:1px solid rgba(0,229,160,.3);color:var(--green);}
+.warn{background:var(--amber-dim);border:1px solid rgba(255,179,71,.3);border-left:3px solid var(--amber);border-radius:4px;padding:9px 13px;font-size:.78rem;color:var(--amber);margin-top:10px;line-height:1.5;}
+.info-box{background:var(--blue-dim);border:1px solid rgba(78,168,255,.25);border-left:3px solid var(--blue);border-radius:4px;padding:10px 14px;font-size:.78rem;color:var(--blue);line-height:1.6;margin-bottom:12px;}
+
+/* Fixtures table */
+.fixtures-wrap{overflow-x:auto;}
+table.fix-table{width:100%;border-collapse:collapse;font-size:.78rem;}
+table.fix-table th{text-align:left;padding:8px 12px;background:var(--raised);color:var(--muted);font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border);white-space:nowrap;}
+table.fix-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+table.fix-table tr:last-child td{border-bottom:none;}
+table.fix-table tr:hover td{background:rgba(255,255,255,.02);}
+table.fix-table tr.value-row td{background:var(--green-dim);}
+
+/* Value results */
+.match-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:14px;overflow:hidden;}
+.match-header{padding:12px 16px;background:var(--raised);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.match-title{font-weight:600;font-size:.9rem;}
+.match-meta{font-size:.72rem;color:var(--muted);}
+.match-value-badge{background:var(--green-dim);color:var(--green);border:1px solid rgba(0,229,160,.3);padding:2px 8px;border-radius:3px;font-size:.7rem;font-weight:700;}
+.odds-table{width:100%;border-collapse:collapse;font-size:.75rem;}
+.odds-table th{text-align:left;padding:7px 12px;color:var(--muted);font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border);}
+.odds-table td{padding:8px 12px;border-bottom:1px solid var(--border);}
+.odds-table tr:last-child td{border-bottom:none;}
+.odds-table tr.best-line td{background:var(--green-dim);}
+.best-badge{display:inline-block;background:var(--green);color:#0e1015;font-size:.6rem;font-weight:700;padding:2px 5px;border-radius:3px;margin-left:5px;}
+.value-badge{display:inline-block;background:var(--green-dim);color:var(--green);border:1px solid rgba(0,229,160,.3);font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:3px;}
+.no-value{color:var(--muted);font-size:.7rem;}
+
+/* Summary stats */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px;}
+.stat-box{background:var(--raised);border:1px solid var(--border);border-radius:4px;padding:12px 14px;}
+.stat-box .sl{font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:4px;}
+.stat-box .sv{font-size:1.1rem;font-weight:600;}
+
+/* Saved bets */
+.table-wrap{overflow-x:auto;}
+table.saved-table{width:100%;border-collapse:collapse;font-size:.75rem;min-width:700px;}
+table.saved-table th{text-align:left;padding:8px 10px;background:var(--raised);color:var(--muted);font-size:.62rem;text-transform:uppercase;letter-spacing:.09em;border-bottom:1px solid var(--border);white-space:nowrap;}
+table.saved-table td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+table.saved-table tr:last-child td{border-bottom:none;}
+table.saved-table tr:hover td{background:var(--raised);}
+.badge{display:inline-block;padding:2px 7px;border-radius:3px;font-size:.68rem;font-weight:600;white-space:nowrap;}
+.b-pending{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(255,179,71,.3);}
+.b-win{background:var(--green-dim);color:var(--green);border:1px solid rgba(0,229,160,.3);}
+.b-loss{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,79,106,.3);}
+.b-void{background:var(--faint);color:var(--muted);border:1px solid var(--border);}
+.b-half_win{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(78,168,255,.3);}
+.b-half_loss{background:var(--red-dim);color:var(--amber);border:1px solid rgba(255,179,71,.3);}
+.summary-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+.sum-box{background:var(--raised);border:1px solid var(--border);border-radius:4px;padding:10px 16px;min-width:110px;}
+.sum-box .sl{font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:3px;}
+.sum-box .sv{font-size:1.05rem;font-weight:600;}
+.empty{text-align:center;padding:32px;color:var(--muted);font-size:.78rem;}
+select.result-select{padding:3px 7px;font-size:.72rem;width:auto;min-width:100px;}
+
+/* P&L Graph */
+.graph-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 20px;margin-bottom:12px;}
+
+hr{border:none;border-top:1px solid var(--border);margin:24px 0;}
+</style>
+</head>
+<body>
+<header>
+  <h1>BetEdge</h1>
+  <span>Sportmonks · Bet365 vs Betfair · Asian Handicap · Value Finder</span>
+</header>
+<div class="wrap">
+
+<!-- API KEY -->
+<div class="section-title">API Key (once only)</div>
+<div class="card">
+  <div class="key-row">
+    <div class="field">
+      <label>Sportmonks API Token</label>
+      <input type="password" id="apiKey" placeholder="Your Sportmonks API token..." oninput="saveKey()"/>
+    </div>
+    <span id="keyStatus" class="key-status missing">Not set</span>
+  </div>
+  <div class="hint-text" style="margin-top:6px;">Saved only in your browser. Never shared. Go to Sportmonks → Tokens to find your token.</div>
+  <div style="margin-top:12px;">
+    <div class="key-row">
+      <div class="field">
+        <label>Anthropic API Key (for proxy)</label>
+        <input type="password" id="claudeKey" placeholder="sk-ant-..." oninput="saveClaudeKey()"/>
+      </div>
+      <span id="claudeKeyStatus" class="key-status missing">Not set</span>
+    </div>
+    <div class="hint-text" style="margin-top:4px;">Used as proxy to fetch Sportmonks data. Find at console.anthropic.com → API Keys.</div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="section-title">Settings</div>
+<div class="card">
+  <div class="row">
+    <div class="field">
+      <label>Bankroll (EUR)</label>
+      <input id="bankroll" type="number" step="10" placeholder="e.g. 500" oninput="saveSetting('bankroll',this.value)"/>
+    </div>
+    <div class="field">
+      <label>Fractional Kelly %</label>
+      <input id="kellyPct" type="number" value="25" min="1" max="100" step="5" oninput="saveSetting('kelly',this.value)"/>
+    </div>
+    <div class="field">
+      <label>Max Stake Cap %</label>
+      <input id="maxCap" type="number" value="3" min="0.5" max="20" step="0.5" oninput="saveSetting('maxcap',this.value)"/>
+    </div>
+    <div class="field">
+      <label>Min EV% to show</label>
+      <input id="minEV" type="number" value="1" min="0" max="15" step="0.5" oninput="saveSetting('minev',this.value)"/>
+      <span class="hint-text">Filter out low-value bets</span>
+    </div>
+    <div class="field">
+      <label>Suspect EV threshold %</label>
+      <input id="suspectThr" type="number" value="15" min="5" max="50" step="1" oninput="saveSetting('suspect',this.value)"/>
+      <span class="hint-text">EV above this = likely data error</span>
+    </div>
+  </div>
+</div>
+
+<!-- SCAN -->
+<div class="section-title">Step 1 — Scan for Value Bets</div>
+<div class="info-box">
+  Click "Scan Now" to automatically fetch all upcoming fixtures from Sportmonks and find Asian Handicap value bets where Bet365 pays more than Betfair Exchange.
+</div>
+<div class="card">
+  <div class="row" style="margin-bottom:14px;align-items:flex-end;">
+    <div class="field">
+      <label>Time window</label>
+      <select id="timeWindow">
+        <option value="24">Next 24 hours</option>
+        <option value="48" selected>Next 48 hours</option>
+        <option value="72">Next 72 hours</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Market</label>
+      <select id="marketFilter">
+        <option value="both">Asian Handicap + Draw No Bet</option>
+        <option value="ah">Asian Handicap only</option>
+        <option value="dnb">Draw No Bet only</option>
+      </select>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;">
+    <button class="btn btn-green" onclick="scanValueBets()" id="scanBtn">🔍 Scan Now</button>
+    <button class="btn btn-ghost" onclick="clearResults()">Clear</button>
+  </div>
+  <div id="statusBox" class="status-box"></div>
+</div>
+
+<!-- RESULTS -->
+<div id="resultsSection" style="display:none;">
+  <div class="section-title">Value Bet Opportunities</div>
+
+  <div class="stat-grid" id="scanStats"></div>
+
+  <div id="valueMatches"></div>
+
+  <div class="warn">
+    ⚠ Always verify odds on Bet365 and Betfair before placing any bet. Sportmonks updates odds every ~10 minutes — always check the current live quote. Betting involves real financial risk.
+  </div>
+</div>
+
+<hr/>
+
+<!-- SAVED BETS -->
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+  <div class="section-title" style="margin:0;">Saved Bets</div>
+  <div style="display:flex;gap:8px;">
+    <button class="btn btn-ghost btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
+    <button class="btn btn-red btn-sm" onclick="clearAllBets()">Clear All</button>
+  </div>
+</div>
+
+<div class="summary-row">
+  <div class="sum-box"><div class="sl">Total</div><div class="sv" id="sumTotal">0</div></div>
+  <div class="sum-box"><div class="sl">Settled</div><div class="sv" id="sumSettled">0</div></div>
+  <div class="sum-box"><div class="sl">Staked</div><div class="sv" id="sumStaked">EUR 0.00</div></div>
+  <div class="sum-box"><div class="sl">P&amp;L</div><div class="sv" id="sumPnl">EUR 0.00</div></div>
+  <div class="sum-box"><div class="sl">ROI</div><div class="sv" id="sumRoi">--</div></div>
+  <div class="sum-box"><div class="sl">Win Rate</div><div class="sv" id="sumWinRate">--</div></div>
+</div>
+
+<!-- Graph -->
+<div class="graph-card">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+    <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);">Bankroll over time</div>
+    <div style="font-size:.7rem;color:var(--muted);">Start: <span id="graphStart">EUR 500</span></div>
+  </div>
+  <canvas id="pnlChart" height="110" style="width:100%;display:block;"></canvas>
+  <div id="graphEmpty" class="empty" style="padding:20px;">Graph appears after first settled bet.</div>
+</div>
+
+<div class="card" style="padding:0;overflow:hidden;">
+  <div class="table-wrap">
+    <table class="saved-table">
+      <thead>
+        <tr><th>#</th><th>Match / Side</th><th>Market</th><th>Handicap</th><th>BF Odds</th><th>B365 Odds</th><th>EV%</th><th>Stake</th><th>Rec. Stake</th><th>P&amp;L</th><th>Result</th><th>Del</th></tr>
+      </thead>
+      <tbody id="betsBody"></tbody>
+    </table>
+  </div>
+  <div id="emptyState" class="empty">No saved bets yet. Scan for value bets above and click Save.</div>
+</div>
+<div style="margin-top:8px;font-size:.68rem;color:var(--muted);font-style:italic;">
+  Bets saved in your browser. Export CSV regularly as backup. Do NOT clear browser cache.
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+// ══════════════════════════════════════
+//  CONSTANTS
+// ══════════════════════════════════════
+var SM_BASE = 'https://api.sportmonks.com/v3/football';
+var MARKET_AH = 28;   // Asian Handicap
+var MARKET_DNB = 28082; // Draw No Bet
+var BK_BET365 = 2;
+var BK_BETFAIR = 15;
+
+// ══════════════════════════════════════
+//  MATHS
+// ══════════════════════════════════════
+function fairProbFromBetfair(backOdds){
+  var effective = 1 + (backOdds-1)*0.975;
+  return 1/effective;
+}
+function evPercent(trueP, bkOdds){
+  return (trueP*(bkOdds-1)) - (1-trueP);
+}
+function kellyFrac(p, odds){
+  var b=odds-1;
+  return (b*p-(1-p))/b;
+}
+function recStakeCalc(bkr, p, odds, kPct, maxPct){
+  var kf=kellyFrac(p,odds);
+  if(kf<=0)return 0;
+  return Math.min(bkr*kf*(kPct/100), bkr*(maxPct/100));
+}
+function calcPnL(r,stake,odds){
+  if(r==='win')return stake*(odds-1);
+  if(r==='loss')return -stake;
+  if(r==='void')return 0;
+  if(r==='half_win')return stake*(odds-1)/2;
+  if(r==='half_loss')return -stake/2;
+  return null;
+}
+function pct(v){return v!=null?(v*100).toFixed(2)+'%':'--';}
+function ps(v){return v!=null?(v>=0?'+':'')+(v*100).toFixed(2)+'%':'--';}
+function eur(v){return v!=null?'EUR '+v.toFixed(2):'--';}
+function getBkr(){return parseFloat(document.getElementById('bankroll').value)||500;}
+function getKelly(){return parseFloat(document.getElementById('kellyPct').value)||25;}
+function getCap(){return parseFloat(document.getElementById('maxCap').value)||3;}
+function getMinEV(){return parseFloat(document.getElementById('minEV').value)||1;}
+function getSuspect(){return parseFloat(document.getElementById('suspectThr').value)||15;}
+
+// ══════════════════════════════════════
+//  SETTINGS & KEY
+// ══════════════════════════════════════
+function saveSetting(k,v){localStorage.setItem('be_'+k,v);}
+function loadSettings(){
+  var m={bankroll:'be_bankroll',kellyPct:'be_kelly',maxCap:'be_maxcap',minEV:'be_minev',suspectThr:'be_suspect'};
+  Object.keys(m).forEach(function(id){
+    var v=localStorage.getItem(m[id]);
+    if(v)document.getElementById(id).value=v;
+  });
+}
+function saveKey(){
+  var k=document.getElementById('apiKey').value.trim();
+  if(k){localStorage.setItem('be_smkey',k);updateKeyStatus();}
+}
+function loadKey(){
+  var k=localStorage.getItem('be_smkey');
+  if(k){document.getElementById('apiKey').value=k;updateKeyStatus();}
+}
+function saveClaudeKey(){
+  var k=document.getElementById('claudeKey').value.trim();
+  if(k){localStorage.setItem('be_claudekey',k);updateClaudeKeyStatus();}
+}
+function loadClaudeKey(){
+  var k=localStorage.getItem('be_claudekey');
+  if(k){document.getElementById('claudeKey').value=k;updateClaudeKeyStatus();}
+}
+function getClaudeKey(){return document.getElementById('claudeKey').value.trim();}
+function updateClaudeKeyStatus(){
+  var k=document.getElementById('claudeKey').value.trim();
+  var el=document.getElementById('claudeKeyStatus');
+  if(k&&k.length>10){el.className='key-status ok';el.textContent='✓ Key set';}
+  else{el.className='key-status missing';el.textContent='Not set';}
+}
+function updateKeyStatus(){
+  var k=document.getElementById('apiKey').value.trim();
+  var el=document.getElementById('keyStatus');
+  if(k&&k.length>10){el.className='key-status ok';el.textContent='✓ Key set';}
+  else{el.className='key-status missing';el.textContent='Not set';}
+}
+function getKey(){return document.getElementById('apiKey').value.trim();}
+
+// ══════════════════════════════════════
+//  SPORTMONKS API (via Claude proxy)
+// ══════════════════════════════════════
+async function smGet(endpoint, params){
+  var smKey = getKey();
+  var claudeKey = getClaudeKey();
+  if(!smKey)throw new Error('No Sportmonks API key set');
+  if(!claudeKey)throw new Error('No Anthropic API key set');
+
+  var url = SM_BASE + endpoint + '?api_token=' + encodeURIComponent(smKey);
+  if(params)Object.keys(params).forEach(function(k){url+='&'+k+'='+encodeURIComponent(params[k]);});
+
+  // Use Claude API as proxy with web_fetch tool
+  var prompt = 'Fetch this URL using the fetch tool and return ONLY the complete raw JSON body. No explanation, no markdown, no truncation. Just the JSON object:\n' + url;
+
+  var resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': claudeKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-5',
+      max_tokens: 16000,
+      system: 'You are a JSON proxy. When given a URL, fetch it and return ONLY the raw JSON response body. Never add explanation, markdown, or commentary. Output must be valid JSON only.',
+      tools: [{
+        type: 'web_search_20250305',
+        name: 'web_search'
+      }],
+      messages: [{
+        role: 'user',
+        content: 'Fetch this URL and return ONLY the JSON: ' + url
+      }]
+    })
+  });
+
+  if(!resp.ok){
+    var err = await resp.json().catch(function(){return {};});
+    throw new Error(err.error&&err.error.message ? err.error.message : 'Claude API error '+resp.status);
+  }
+
+  var claudeData = await resp.json();
+
+  // Try to find JSON in any content block
+  var text = '';
+  var toolResults = [];
+  if(claudeData.content){
+    claudeData.content.forEach(function(block){
+      if(block.type==='text') text += block.text;
+      if(block.type==='tool_result' && block.content){
+        block.content.forEach(function(c){ if(c.type==='text') toolResults.push(c.text); });
+      }
+    });
+  }
+
+  // Try tool results first, then text
+  var sources = toolResults.concat([text]);
+  for(var si=0; si<sources.length; si++){
+    var s = sources[si].trim();
+    if(!s) continue;
+    // Strip markdown
+    s = s.replace(/^```json\s*/m,'').replace(/```\s*$/m,'').replace(/^```\s*/m,'').trim();
+    // Try direct parse
+    try{ return JSON.parse(s); }catch(e){}
+    // Try extract JSON object
+    var m = s.match(/\{[\s\S]+\}/);
+    if(m){ try{ return JSON.parse(m[0]); }catch(e){} }
+  }
+
+  throw new Error('Could not parse Sportmonks response. Try again.');
+}
+
+// Fetch fixtures between two dates
+async function fetchFixtures(dateFrom, dateTo){
+  var data = await smGet('/fixtures/between/'+dateFrom+'/'+dateTo, {
+    include: 'participants',
+    filters: 'fixtureHasOdds:true',
+    per_page: 50
+  });
+  return data.data||[];
+}
+
+// Fetch odds for a fixture — Asian Handicap + DNB for Bet365 and Betfair
+async function fetchOdds(fixtureId, markets){
+  var marketStr = markets.join(',');
+  var data = await smGet('/odds/pre-match/fixtures/'+fixtureId, {
+    filters: 'bookmakers:'+BK_BET365+','+BK_BETFAIR+';markets:'+marketStr,
+    per_page: 200
+  });
+  return data.data||[];
+}
+
+// ══════════════════════════════════════
+//  MAIN SCAN
+// ══════════════════════════════════════
+var _lastValueBets = [];
+
+async function scanValueBets(){
+  var key = getKey();
+  if(!key){alert('Please enter your Sportmonks API token first.');return;}
+
+  var hours = parseInt(document.getElementById('timeWindow').value)||48;
+  var marketSel = document.getElementById('marketFilter').value;
+  var markets = marketSel==='ah'?[MARKET_AH]:marketSel==='dnb'?[MARKET_DNB]:[MARKET_AH,MARKET_DNB];
+  var minEV = getMinEV()/100;
+  var suspectThr = getSuspect()/100;
+
+  setStatus('loading','<span class="spinner"></span> Fetching upcoming fixtures from Sportmonks...');
+  document.getElementById('resultsSection').style.display='none';
+  document.getElementById('scanBtn').disabled=true;
+
+  try{
+    // Date range
+    var now = new Date();
+    var future = new Date(now.getTime() + hours*3600000);
+    var dateFrom = now.toISOString().slice(0,10);
+    var dateTo = future.toISOString().slice(0,10);
+
+    setStatus('loading','<span class="spinner"></span> Loading fixtures for '+dateFrom+' to '+dateTo+'...');
+
+    var fixtures = await fetchFixtures(dateFrom, dateTo);
+    if(!fixtures.length){
+      setStatus('error','No upcoming fixtures found for this time window. Try expanding the time range.');
+      document.getElementById('scanBtn').disabled=false;
+      return;
+    }
+
+    // Filter to only fixtures with odds
+    var withOdds = fixtures.filter(function(f){return f.has_odds;});
+    setStatus('loading','<span class="spinner"></span> Found '+fixtures.length+' fixtures ('+withOdds.length+' with odds). Analysing odds...');
+
+    var valueBets = [];
+    var totalAnalysed = 0;
+    var bkr=getBkr(), kPct=getKelly(), cap=getCap();
+
+    for(var i=0;i<withOdds.length;i++){
+      var fixture = withOdds[i];
+      if(i%5===0){
+        setStatus('loading','<span class="spinner"></span> Analysing fixture '+(i+1)+'/'+withOdds.length+': '+fixture.name+'...');
+      }
+
+      try{
+        var odds = await fetchOdds(fixture.id, markets);
+        if(!odds.length)continue;
+        totalAnalysed++;
+
+        // Get team names from participants
+        var home='Home', away='Away';
+        if(fixture.participants&&fixture.participants.data){
+          fixture.participants.data.forEach(function(p){
+            if(p.meta&&p.meta.location==='home')home=p.name;
+            if(p.meta&&p.meta.location==='away')away=p.name;
+          });
+        }
+
+        // Group odds by market + handicap + label
+        var bet365Odds={}, betfairOdds={};
+        odds.forEach(function(o){
+          var hc = o.handicap||'0';
+          var key = o.market_id+'|'+hc+'|'+o.label;
+          if(o.bookmaker_id===BK_BET365) bet365Odds[key]=parseFloat(o.value);
+          if(o.bookmaker_id===BK_BETFAIR) betfairOdds[key]=parseFloat(o.value);
+        });
+
+        // Compare
+        var matchValueBets=[];
+        Object.keys(bet365Odds).forEach(function(key){
+          var b365 = bet365Odds[key];
+          var bf   = betfairOdds[key];
+          if(!b365||b365<=1)return;
+
+          var parts = key.split('|');
+          var mkt = parseInt(parts[0]);
+          var hc  = parts[1];
+          var lbl = parts[2];
+
+          var trueP, ev, rec;
+          if(bf&&bf>1){
+            trueP = fairProbFromBetfair(bf);
+          } else {
+            // No Betfair reference — skip
+            return;
+          }
+
+          ev  = evPercent(trueP, b365);
+          rec = bkr>0 ? recStakeCalc(bkr,trueP,b365,kPct,cap) : null;
+
+          var isSuspect = Math.abs(ev)>suspectThr;
+          var hasValue  = ev>=minEV && !isSuspect;
+
+          if(!hasValue)return;
+
+          var marketName = mkt===MARKET_AH?'Asian Handicap':'Draw No Bet';
+          var side = lbl==='1'?home:lbl==='2'?away:lbl;
+
+          matchValueBets.push({
+            fixtureId: fixture.id,
+            match: fixture.name||home+' vs '+away,
+            home: home, away: away,
+            league: fixture.league_id||'',
+            kickoff: fixture.starting_at,
+            marketType: marketName,
+            marketId: mkt,
+            handicap: hc,
+            side: side,
+            label: lbl,
+            b365Odds: b365,
+            bfOdds: bf,
+            trueP: trueP,
+            ev: ev,
+            rec: rec,
+            isSuspect: isSuspect,
+            hasValue: hasValue,
+            bankroll: bkr, kPct: kPct, maxCap: cap
+          });
+        });
+
+        if(matchValueBets.length>0){
+          // Sort by EV
+          matchValueBets.sort(function(a,b){return b.ev-a.ev;});
+          valueBets.push({fixture:fixture, home:home, away:away, bets:matchValueBets});
+        }
+
+      }catch(err){
+        // Skip fixture on error
+      }
+
+      // Small delay to avoid rate limiting
+      await new Promise(function(r){setTimeout(r,150);});
+    }
+
+    _lastValueBets = valueBets;
+    setStatus('success','✓ Scan complete — analysed '+totalAnalysed+' fixtures, found '+valueBets.length+' matches with value bets.');
+    renderResults(valueBets, totalAnalysed);
+
+  }catch(err){
+    setStatus('error','⚠ Error: '+err.message);
+  }
+  document.getElementById('scanBtn').disabled=false;
+}
+
+function setStatus(type,msg){
+  var box=document.getElementById('statusBox');
+  box.className='status-box '+type;
+  box.innerHTML=msg;
+  box.style.display='block';
+}
+
+function clearResults(){
+  document.getElementById('resultsSection').style.display='none';
+  setStatus('','');
+  document.getElementById('statusBox').style.display='none';
+}
+
+// ══════════════════════════════════════
+//  RENDER RESULTS
+// ══════════════════════════════════════
+function renderResults(valueBets, totalAnalysed){
+  var totalBets = valueBets.reduce(function(s,m){return s+m.bets.length;},0);
+
+  // Stats
+  var statsEl = document.getElementById('scanStats');
+  statsEl.innerHTML =
+    '<div class="stat-box"><div class="sl">Fixtures Scanned</div><div class="sv">'+totalAnalysed+'</div></div>'+
+    '<div class="stat-box"><div class="sl">Matches with Value</div><div class="sv" style="color:var(--green)">'+valueBets.length+'</div></div>'+
+    '<div class="stat-box"><div class="sl">Value Bets Found</div><div class="sv" style="color:var(--green)">'+totalBets+'</div></div>'+
+    '<div class="stat-box"><div class="sl">Bankroll</div><div class="sv">'+eur(getBkr())+'</div></div>';
+
+  var container = document.getElementById('valueMatches');
+  container.innerHTML='';
+
+  if(valueBets.length===0){
+    container.innerHTML='<div class="empty" style="padding:40px;color:var(--muted);">No value bets found in this time window. Try expanding to 48h or 72h, or scan again later when more odds are available.</div>';
+    document.getElementById('resultsSection').style.display='block';
+    return;
+  }
+
+  valueBets.forEach(function(match, mi){
+    var best = match.bets[0];
+    var kickoffStr = match.fixture.starting_at ? new Date(match.fixture.starting_at).toLocaleString('de-AT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '--';
+
+    var html='<div class="match-block">';
+    html+='<div class="match-header">';
+    html+='<div>';
+    html+='<div class="match-title">'+match.home+' vs '+match.away+'</div>';
+    html+='<div class="match-meta">'+kickoffStr+'</div>';
+    html+='</div>';
+    html+='<span class="match-value-badge">'+match.bets.length+' value bet'+(match.bets.length>1?'s':'')+'</span>';
+    html+='</div>';
+
+    html+='<table class="odds-table"><thead><tr>';
+    html+='<th>Market</th><th>Handicap</th><th>Side</th><th>Betfair (fair)</th><th>Bet365</th><th>Difference</th><th>EV%</th><th>Rec. Stake</th><th>Signal</th><th>Save</th>';
+    html+='</tr></thead><tbody>';
+
+    match.bets.forEach(function(b, bi){
+      var isBest=bi===0;
+      var diff = b.b365Odds - b.bfOdds;
+      var diffStr = diff>0?'<span style="color:var(--green)">+'+diff.toFixed(3)+'</span>':'<span style="color:var(--red)">'+diff.toFixed(3)+'</span>';
+      var evCol = b.ev>0?'color:var(--green)':'color:var(--red)';
+      var idx = mi+'_'+bi;
+
+      html+='<tr class="'+(isBest?'best-line':'')+'">';
+      html+='<td>'+b.marketType+'</td>';
+      html+='<td style="font-family:var(--mono)">'+b.handicap+'</td>';
+      html+='<td>'+b.side+(isBest?'<span class="best-badge">BEST</span>':'')+'</td>';
+      html+='<td style="color:var(--blue)">'+b.bfOdds.toFixed(3)+'</td>';
+      html+='<td style="font-weight:700">'+b.b365Odds.toFixed(3)+'</td>';
+      html+='<td>'+diffStr+'</td>';
+      html+='<td style="'+evCol+';font-weight:700">'+ps(b.ev)+'</td>';
+      html+='<td style="color:var(--green)">'+(b.rec>0?eur(b.rec):'--')+'</td>';
+      html+='<td><span class="value-badge">BET</span></td>';
+      html+='<td><button class="btn btn-blue btn-sm" onclick="saveBetFromScan(\''+idx+'\')">Save</button></td>';
+      html+='</tr>';
+    });
+
+    html+='</tbody></table></div>';
+    container.innerHTML+=html;
+  });
+
+  document.getElementById('resultsSection').style.display='block';
+  document.getElementById('resultsSection').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function saveBetFromScan(idx){
+  var parts = idx.split('_');
+  var mi=parseInt(parts[0]), bi=parseInt(parts[1]);
+  var match=_lastValueBets[mi], b=match.bets[bi];
+  if(!b)return;
+  var bets=loadBets();
+  bets.unshift({
+    id:Date.now(),
+    match:match.home+' vs '+match.away,
+    league:'', market:b.marketType,
+    handicap:b.handicap, myOdds:b.b365Odds, bfOdds:b.bfOdds,
+    stake:0, bankroll:b.bankroll, kPct:b.kPct, maxCap:b.maxCap,
+    trueP:b.trueP, ev:b.ev, rec:b.rec,
+    result:'pending', savedAt:new Date().toISOString(),
+    sideLabel:b.side+' ('+b.handicap+')',
+    kickoff:match.fixture.starting_at
+  });
+  saveBets(bets); renderBets();
+  alert('Saved: '+b.side+' ('+b.handicap+') — '+b.marketType+'\nBet365: '+b.b365Odds.toFixed(3)+' | EV: '+ps(b.ev));
+}
+
+// ══════════════════════════════════════
+//  SAVED BETS
+// ══════════════════════════════════════
+function deleteBet(id){if(!confirm('Delete?'))return;saveBets(loadBets().filter(function(b){return b.id!==id;}));renderBets();}
+function clearAllBets(){if(!confirm('Delete ALL saved bets?'))return;saveBets([]);renderBets();}
+function updateResult(id,result){
+  var bets=loadBets(),b=bets.find(function(x){return x.id===id;});
+  if(b){b.result=result;if(result!=='pending'&&!b.settledAt)b.settledAt=new Date().toISOString();saveBets(bets);renderBets();}
+}
+function updateStake(id,val){
+  var bets=loadBets(),b=bets.find(function(x){return x.id===id;});
+  if(b){b.stake=parseFloat(val)||0;saveBets(bets);renderBets();}
+}
+function loadBets(){try{return JSON.parse(localStorage.getItem('betedge_bets')||'[]');}catch(e){return[];}}
+function saveBets(b){localStorage.setItem('betedge_bets',JSON.stringify(b));}
+
+function renderBets(){
+  var bets=loadBets(),tbody=document.getElementById('betsBody'),empty=document.getElementById('emptyState');
+  tbody.innerHTML='';
+  if(!bets.length){empty.style.display='block';renderSummary([]);drawGraph([]);return;}
+  empty.style.display='none';
+  bets.forEach(function(b,i){
+    var pnl=calcPnL(b.result,b.stake||0,b.myOdds);
+    var pnlStr=pnl===null?'--':(pnl>=0?'+':'')+eur(pnl);
+    var pnlCol=pnl===null?'':pnl>0?'color:var(--green)':pnl<0?'color:var(--red)':'';
+    var label=b.sideLabel||(b.match||'--');
+    var bc=['win','loss','void','half_win','half_loss'].indexOf(b.result)>=0?b.result:'pending';
+    var dateStr=b.savedAt?new Date(b.savedAt).toLocaleDateString('de-AT',{day:'2-digit',month:'2-digit'}):'--';
+    var opts=['pending','win','loss','void','half_win','half_loss'].map(function(r){
+      return '<option value="'+r+'"'+(b.result===r?' selected':'')+'>'+r.replace('_',' ')+'</option>';
+    }).join('');
+    tbody.innerHTML+='<tr>'
+      +'<td style="color:var(--muted)">'+(bets.length-i)+'</td>'
+      +'<td><div style="font-weight:600">'+label+'</div><div style="color:var(--muted);font-size:.68rem">'+(b.match||'')+'</div><div style="color:var(--muted);font-size:.65rem">'+dateStr+'</div></td>'
+      +'<td><span class="badge b-'+bc+'">'+(b.market||'AH')+'</span></td>'
+      +'<td style="font-family:var(--mono)">'+(b.handicap||'--')+'</td>'
+      +'<td style="color:var(--blue)">'+(b.bfOdds?b.bfOdds.toFixed(3):'--')+'</td>'
+      +'<td>'+b.myOdds.toFixed(3)+'</td>'
+      +'<td style="'+(b.ev>0?'color:var(--green)':'color:var(--red)')+'">'+ps(b.ev)+'</td>'
+      +'<td><input type="number" style="width:75px;padding:3px 6px;font-size:.75rem" value="'+(b.stake||'')+'" placeholder="EUR" onchange="updateStake('+b.id+',this.value)" min="0" step="1"/></td>'
+      +'<td style="color:var(--green)">'+(b.rec>0?eur(b.rec):'--')+'</td>'
+      +'<td style="'+pnlCol+';font-weight:700">'+pnlStr+'</td>'
+      +'<td><select class="input result-select" onchange="updateResult('+b.id+',this.value)">'+opts+'</select></td>'
+      +'<td><button class="btn btn-red btn-sm" onclick="deleteBet('+b.id+')">X</button></td>'
+      +'</tr>';
+  });
+  renderSummary(bets);
+  drawGraph(bets);
+}
+
+function renderSummary(bets){
+  var settled=bets.filter(function(b){return b.result!=='pending';});
+  var wins=bets.filter(function(b){return b.result==='win'||b.result==='half_win';});
+  var ts=bets.reduce(function(s,b){return s+(b.stake||0);},0);
+  var tp=settled.reduce(function(s,b){var p=calcPnL(b.result,b.stake||0,b.myOdds);return s+(p||0);},0);
+  var roi=ts>0?tp/ts*100:null;
+  var wr=settled.length>0?(wins.length/settled.length*100):null;
+  document.getElementById('sumTotal').textContent=bets.length;
+  document.getElementById('sumSettled').textContent=settled.length;
+  document.getElementById('sumStaked').textContent=eur(ts);
+  var pe=document.getElementById('sumPnl');pe.textContent=(tp>=0?'+':'')+eur(tp);pe.style.color=tp>0?'var(--green)':tp<0?'var(--red)':'';
+  var re=document.getElementById('sumRoi');re.textContent=roi!==null?(roi>=0?'+':'')+roi.toFixed(1)+'%':'--';re.style.color=roi>0?'var(--green)':roi<0?'var(--red)':'';
+  var we=document.getElementById('sumWinRate');we.textContent=wr!==null?wr.toFixed(0)+'%':'--';
+  var startBkr=parseFloat(localStorage.getItem('be_bankroll'))||500;
+  document.getElementById('graphStart').textContent='EUR '+startBkr.toFixed(0);
+}
+
+function drawGraph(bets){
+  var canvas=document.getElementById('pnlChart');
+  var empty=document.getElementById('graphEmpty');
+  var settled=bets.filter(function(b){return b.result!=='pending';})
+    .sort(function(a,b){return new Date(a.settledAt||a.savedAt)-new Date(b.settledAt||b.savedAt);});
+  if(settled.length===0){canvas.style.display='none';empty.style.display='block';return;}
+  canvas.style.display='block';empty.style.display='none';
+  var startBkr=parseFloat(localStorage.getItem('be_bankroll'))||500;
+  var points=[{x:0,y:startBkr,label:'Start'}];
+  var running=startBkr;
+  settled.forEach(function(b,i){
+    var pnl=calcPnL(b.result,b.stake||0,b.myOdds)||0;
+    running+=pnl;
+    var dateStr=b.settledAt?new Date(b.settledAt).toLocaleDateString('de-AT',{day:'2-digit',month:'2-digit'}):('Bet '+(i+1));
+    points.push({x:i+1,y:running,label:dateStr,pnl:pnl});
+  });
+  var W=canvas.offsetWidth||800,H=110;
+  canvas.width=W*(window.devicePixelRatio||1);canvas.height=H*(window.devicePixelRatio||1);
+  canvas.style.width=W+'px';canvas.style.height=H+'px';
+  var ctx=canvas.getContext('2d');ctx.scale(window.devicePixelRatio||1,window.devicePixelRatio||1);
+  var pad={t:8,r:16,b:24,l:55},cW=W-pad.l-pad.r,cH=H-pad.t-pad.b;
+  var ys=points.map(function(p){return p.y;});
+  var minY=Math.min.apply(null,ys),maxY=Math.max.apply(null,ys),range=maxY-minY||1;
+  minY-=range*0.1;maxY+=range*0.1;range=maxY-minY;
+  function cx(i){return pad.l+(i/(points.length-1||1))*cW;}
+  function cy(v){return pad.t+cH-(v-minY)/range*cH;}
+  ctx.strokeStyle='rgba(37,45,64,0.8)';ctx.lineWidth=1;
+  for(var g=0;g<=4;g++){var gy=pad.t+(g/4)*cH;ctx.beginPath();ctx.moveTo(pad.l,gy);ctx.lineTo(pad.l+cW,gy);ctx.stroke();var val=maxY-(g/4)*range;ctx.fillStyle='#5a6a88';ctx.font='9px Consolas,monospace';ctx.textAlign='right';ctx.fillText(val.toFixed(0),pad.l-4,gy+4);}
+  var zY=cy(startBkr);ctx.strokeStyle='rgba(90,106,136,0.4)';ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(pad.l,zY);ctx.lineTo(pad.l+cW,zY);ctx.stroke();ctx.setLineDash([]);
+  if(points.length>1){var lp=points[points.length-1],fc=lp.y>=startBkr?'rgba(0,229,160,0.08)':'rgba(255,79,106,0.08)';ctx.beginPath();ctx.moveTo(cx(0),cy(points[0].y));for(var i=1;i<points.length;i++)ctx.lineTo(cx(i),cy(points[i].y));ctx.lineTo(cx(points.length-1),pad.t+cH);ctx.lineTo(cx(0),pad.t+cH);ctx.closePath();ctx.fillStyle=fc;ctx.fill();ctx.beginPath();ctx.moveTo(cx(0),cy(points[0].y));for(var i=1;i<points.length;i++)ctx.lineTo(cx(i),cy(points[i].y));ctx.strokeStyle=lp.y>=startBkr?'#00e5a0':'#ff4f6a';ctx.lineWidth=2;ctx.stroke();}
+  for(var i=0;i<points.length;i++){var p=points[i],col=i===0?'#5a6a88':(p.pnl>=0?'#00e5a0':'#ff4f6a');ctx.beginPath();ctx.arc(cx(i),cy(p.y),3,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();}
+  ctx.fillStyle='#5a6a88';ctx.font='9px Consolas,monospace';ctx.textAlign='center';
+  for(var i=0;i<points.length;i++){if(i===0||i===points.length-1||i%5===0)ctx.fillText(points[i].label,cx(i),H-5);}
+}
+
+function exportCSV(){
+  var bets=loadBets();
+  if(!bets.length){alert('No bets to export.');return;}
+  var rows=[['#','Date','Match','Side','Market','Handicap','BF Odds','B365 Odds','EV%','Stake','Rec Stake','PnL','Result']];
+  bets.forEach(function(b,i){
+    var pnl=calcPnL(b.result,b.stake||0,b.myOdds);
+    rows.push([bets.length-i,b.savedAt?new Date(b.savedAt).toLocaleDateString('de-AT'):'',b.match||'',b.sideLabel||'',b.market||'',b.handicap||'',b.bfOdds?b.bfOdds.toFixed(3):'',b.myOdds?b.myOdds.toFixed(3):'',b.ev?(b.ev*100).toFixed(2)+'%':'',b.stake||0,b.rec?b.rec.toFixed(2):'',pnl!==null?pnl.toFixed(2):'pending',b.result||'pending']);
+  });
+  var csv=rows.map(function(r){return r.map(function(c){return '"'+String(c).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
+  var blob=new Blob([csv],{type:'text/csv'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='betedge_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+}
+
+loadSettings();loadKey();renderBets();
+</script>
+</body>
+</html>
