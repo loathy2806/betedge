@@ -31,14 +31,16 @@ label{font-size:.63rem;text-transform:uppercase;letter-spacing:.1em;color:var(--
 input,select,textarea{background:var(--raised);border:1px solid var(--border2);border-radius:4px;color:var(--text);font-family:var(--mono);font-size:.82rem;padding:7px 9px;width:100%;transition:border-color .15s;}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--green);}
 input::placeholder,textarea::placeholder{color:var(--muted);}
-textarea{resize:vertical;min-height:140px;font-size:.75rem;line-height:1.5;}
+textarea{resize:vertical;min-height:150px;font-size:.75rem;line-height:1.5;}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:4px;font-family:var(--mono);font-size:.78rem;font-weight:600;cursor:pointer;border:1px solid transparent;transition:all .15s;white-space:nowrap;}
 .btn-green{background:var(--green);color:#0a0d12;}
 .btn-green:hover{background:#33ffb0;}
+.btn-green:disabled{opacity:.5;cursor:not-allowed;}
 .btn-ghost{background:transparent;color:var(--muted);border-color:var(--border2);}
 .btn-ghost:hover{color:var(--text);border-color:var(--text);}
 .btn-red{background:transparent;color:var(--red);border-color:var(--red);}
 .btn-blue{background:transparent;color:var(--blue);border-color:var(--blue);}
+.btn-amber{background:transparent;color:var(--amber);border-color:var(--amber);}
 .btn-sm{padding:3px 9px;font-size:.68rem;}
 .kstat{font-size:.68rem;padding:4px 9px;border-radius:3px;white-space:nowrap;}
 .kstat.ok{background:var(--green-dim);color:var(--green);}
@@ -51,6 +53,20 @@ textarea{resize:vertical;min-height:140px;font-size:.75rem;line-height:1.5;}
 .sbox.success{background:var(--green-dim);border:1px solid rgba(0,217,139,.3);color:var(--green);}
 .warn{background:var(--amber-dim);border:1px solid rgba(255,170,51,.3);border-left:3px solid var(--amber);border-radius:4px;padding:8px 12px;font-size:.72rem;color:var(--amber);margin-top:8px;line-height:1.5;}
 .info{background:var(--blue-dim);border:1px solid rgba(61,158,255,.25);border-left:3px solid var(--blue);border-radius:4px;padding:9px 13px;font-size:.72rem;color:var(--blue);line-height:1.6;margin-bottom:10px;}
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;}
+@media(max-width:700px){.panels{grid-template-columns:1fr;}}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
+.panel-hdr{padding:10px 14px;font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--border);}
+.panel-hdr.blue{background:var(--blue-dim);color:var(--blue);}
+.panel-hdr.amber{background:var(--amber-dim);color:var(--amber);}
+.panel-body{padding:12px 14px;}
+.dz{border:2px dashed var(--border2);border-radius:4px;padding:16px;text-align:center;cursor:pointer;transition:all .15s;position:relative;margin-bottom:8px;}
+.dz:hover{border-color:var(--amber);}
+.dz input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.dz-text{font-size:.72rem;color:var(--muted);}
+img.preview{max-width:100%;max-height:160px;border-radius:4px;margin-top:6px;display:none;}
+.extracted{background:var(--raised);border:1px solid var(--border);border-radius:4px;padding:6px 10px;font-size:.68rem;color:var(--muted);margin-top:6px;display:none;max-height:80px;overflow-y:auto;line-height:1.8;}
+.tag{display:inline-block;background:var(--faint);border:1px solid var(--border);border-radius:3px;padding:1px 6px;font-size:.63rem;color:var(--muted);margin:1px;}
 .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:14px;}
 .stat-box{background:var(--raised);border:1px solid var(--border);border-radius:4px;padding:10px 12px;}
 .stat-box .sl{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:3px;}
@@ -66,11 +82,11 @@ table.rtbl tr.srow td{background:var(--red-dim);}
 .sbadge{display:inline-block;background:var(--red-dim);color:var(--red);border:1px solid rgba(255,61,90,.3);font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:3px;}
 .nbadge{display:inline-block;color:var(--muted);font-size:.65rem;padding:2px 7px;}
 .bbadge{display:inline-block;background:var(--green);color:#0a0d12;font-size:.6rem;font-weight:700;padding:2px 5px;border-radius:3px;margin-left:4px;}
-table.stbl{width:100%;border-collapse:collapse;font-size:.72rem;min-width:680px;}
+table.stbl{width:100%;border-collapse:collapse;font-size:.72rem;min-width:700px;}
 table.stbl th{text-align:left;padding:7px 9px;background:var(--raised);color:var(--muted);font-size:.6rem;text-transform:uppercase;letter-spacing:.09em;border-bottom:1px solid var(--border);white-space:nowrap;}
 table.stbl td{padding:8px 9px;border-bottom:1px solid var(--border);vertical-align:middle;}
 table.stbl tr:last-child td{border-bottom:none;}
-.bdg{display:inline-block;padding:2px 7px;border-radius:3px;font-size:.65rem;font-weight:600;}
+table.stbl tr:hover td{background:var(--raised);}
 .b-pending{background:var(--amber-dim);color:var(--amber);}
 .b-win{background:var(--green-dim);color:var(--green);}
 .b-loss{background:var(--red-dim);color:var(--red);}
@@ -82,86 +98,80 @@ table.stbl tr:last-child td{border-bottom:none;}
 .sum-box .sl{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:2px;}
 .sum-box .sv{font-size:1rem;font-weight:600;}
 .empty{text-align:center;padding:28px;color:var(--muted);font-size:.75rem;}
-.tag{display:inline-block;background:var(--faint);border:1px solid var(--border);border-radius:3px;padding:1px 6px;font-size:.65rem;color:var(--muted);margin:1px;}
 hr{border:none;border-top:1px solid var(--border);margin:20px 0;}
 </style>
 </head>
 <body>
 <header>
   <h1>BetEdge</h1>
-  <span>Betinasia vs Singbet/Betfair · Asian Handicap · Value Finder</span>
+  <span>Betinasia (Wetten) vs Bet365 (Referenz) · Asian Handicap · Value Finder</span>
 </header>
 <div class="wrap">
 
-<div class="stitle">API Keys</div>
+<!-- API KEY -->
+<div class="stitle">API Key</div>
 <div class="card">
-  <div class="row" style="margin-bottom:10px;">
+  <div style="display:flex;gap:8px;align-items:flex-end;">
     <div class="field">
-      <label>OddsPapi API Key</label>
-      <input type="password" id="opKey" placeholder="Dein OddsPapi Key..." oninput="saveKeys()"/>
+      <label>Anthropic API Key</label>
+      <input type="password" id="apiKey" placeholder="sk-ant-..." oninput="saveKey()"/>
     </div>
-    <span id="opStatus" class="kstat miss">Not set</span>
+    <span id="keyStatus" class="kstat miss">Not set</span>
   </div>
-  <div class="hint">Gratis auf oddspapi.io. Wird nur in deinem Browser gespeichert.</div>
+  <div class="hint" style="margin-top:5px;">Nur in deinem Browser gespeichert. Für das Lesen des Bet365 Screenshots.</div>
 </div>
 
+<!-- SETTINGS -->
 <div class="stitle">Settings</div>
 <div class="card">
   <div class="row">
-    <div class="field"><label>Bankroll (EUR)</label><input id="bankroll" type="number" value="500" step="10" oninput="saveSettings()"/></div>
-    <div class="field"><label>Kelly %</label><input id="kellyPct" type="number" value="25" min="1" max="100" step="5" oninput="saveSettings()"/></div>
-    <div class="field"><label>Max Stake %</label><input id="maxCap" type="number" value="3" min="0.5" max="20" step="0.5" oninput="saveSettings()"/></div>
-    <div class="field"><label>Min EV %</label><input id="minEV" type="number" value="1" min="0" max="15" step="0.5" oninput="saveSettings()"/></div>
-    <div class="field"><label>Suspect EV %</label><input id="suspectThr" type="number" value="15" min="5" max="50" step="1" oninput="saveSettings()"/></div>
-    <div class="field">
-      <label>Referenz Buchmacher</label>
-      <select id="refBook" oninput="saveSettings()">
-        <option value="singbet">Singbet (empfohlen)</option>
-        <option value="betfair">Betfair Exchange</option>
-        <option value="pinnacle">Pinnacle</option>
-      </select>
-    </div>
+    <div class="field"><label>Bankroll (EUR)</label><input id="bankroll" type="number" value="500" step="10" oninput="saveSetting('bankroll',this.value)"/></div>
+    <div class="field"><label>Kelly %</label><input id="kellyPct" type="number" value="25" min="1" max="100" step="5" oninput="saveSetting('kelly',this.value)"/></div>
+    <div class="field"><label>Max Stake %</label><input id="maxCap" type="number" value="3" min="0.5" max="20" step="0.5" oninput="saveSetting('maxcap',this.value)"/></div>
+    <div class="field"><label>Min EV %</label><input id="minEV" type="number" value="1" min="0" max="15" step="0.5" oninput="saveSetting('minev',this.value)"/></div>
+    <div class="field"><label>Suspect EV %</label><input id="suspectThr" type="number" value="15" min="5" max="50" step="1" oninput="saveSetting('suspect',this.value)"/></div>
   </div>
 </div>
 
-<div class="stitle">Schritt 1 — Betinasia Text einfügen</div>
+<!-- INPUT -->
+<div class="stitle">Schritt 1 — Daten eingeben</div>
 <div class="info">
-  Kopiere den Asian Handicap Text aus Betinasia und füge ihn unten ein. Das Tool holt die Referenzquoten automatisch von OddsPapi.
+  <strong>Links:</strong> Betinasia Asian Handicap Text kopieren &amp; einfügen — hier wettest du.<br>
+  <strong>Rechts:</strong> Bet365 Asian Handicap Screenshot hochladen — nur als Referenz zum Vergleich.
 </div>
-<div class="card">
-  <div class="row" style="margin-bottom:10px;">
-    <div class="field" style="flex:2;">
-      <label>Spiel suchen (Teamname eingeben)</label>
-      <div style="display:flex;gap:6px;">
-        <input id="searchQuery" placeholder="z.B. Sturm oder Rapid..." style="flex:1;" onkeydown="if(event.key==='Enter')searchFixtures()"/>
-        <button class="btn btn-blue btn-sm" onclick="searchFixtures()" style="white-space:nowrap;">🔍 Suchen</button>
+<div class="panels">
+  <!-- Betinasia -->
+  <div class="panel">
+    <div class="panel-hdr blue">📋 Betinasia — Text einfügen (hier wettest du)</div>
+    <div class="panel-body">
+      <div class="field">
+        <label>Asian Handicap Text</label>
+        <textarea id="biaText" placeholder="asian handicap&#10;-2,75&#10;STU3.067&#10;SCR1.009&#10;-0,5&#10;STU2.009&#10;SCR1.934&#10;..."></textarea>
       </div>
-    </div>
-    <div class="field" style="flex:2;">
-      <label>Spiel auswählen</label>
-      <select id="fixtureSelect" onchange="onFixtureSelected()">
-        <option value="">— Zuerst suchen —</option>
-      </select>
+      <div id="biaExtracted" class="extracted"></div>
     </div>
   </div>
-  <div id="selectedFixture" style="font-size:.7rem;color:var(--green);margin-bottom:8px;display:none;"></div>
-  <input type="hidden" id="homeTeam" value=""/>
-  <input type="hidden" id="awayTeam" value=""/>
-  <input type="hidden" id="selectedFixtureId" value=""/>
-  <div class="field">
-    <label>Betinasia Asian Handicap Text</label>
-    <textarea id="biaText" placeholder="asian handicap&#10;-2,75&#10;STU3.067&#10;SCR1.009&#10;-0,5&#10;STU2.009&#10;SCR1.934&#10;..."></textarea>
+  <!-- Bet365 -->
+  <div class="panel">
+    <div class="panel-hdr amber">📸 Bet365 — Screenshot (nur Referenz)</div>
+    <div class="panel-body">
+      <div class="dz" id="b365dz" ondragover="event.preventDefault()" ondrop="handleDrop(event)">
+        <input type="file" accept="image/*" onchange="handleFile(event)"/>
+        <div class="dz-text">Klick oder Ctrl+V zum Einfügen<br><span style="font-size:.63rem;">Screenshot der Bet365 Alternative Asian Handicap Seite</span></div>
+      </div>
+      <img id="prevB365" class="preview"/>
+      <div id="b365Extracted" class="extracted"></div>
+    </div>
   </div>
-  <div id="biaExtracted" style="margin-top:6px;display:none;"></div>
 </div>
 
 <div style="display:flex;gap:8px;margin-bottom:10px;">
   <button class="btn btn-green" onclick="analyseAll()" id="analyseBtn">⚡ Analysieren</button>
   <button class="btn btn-ghost" onclick="clearAll()">Clear</button>
 </div>
-<div id="debugBox" style="display:none;background:var(--raised);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;margin-bottom:10px;max-height:200px;overflow-y:auto;font-size:.72rem;"></div>
 <div id="statusBox" class="sbox"></div>
 
+<!-- RESULTS -->
 <div id="resultsSection" style="display:none;">
   <div class="stitle">Value Bet Ergebnisse</div>
   <div class="stat-grid" id="statsGrid"></div>
@@ -170,284 +180,208 @@ hr{border:none;border-top:1px solid var(--border);margin:20px 0;}
       <table class="rtbl">
         <thead>
           <tr>
-            <th>Handicap</th><th>Seite</th>
+            <th>Handicap</th>
+            <th>Seite</th>
             <th>Betinasia (Wetten)</th>
-            <th id="thRef">Referenz (fair)</th>
-            <th>Differenz</th><th>EV%</th><th>Rec. Stake</th><th>Signal</th><th>Save</th>
+            <th>Bet365 (Referenz)</th>
+            <th>Differenz</th>
+            <th>EV%</th>
+            <th>Rec. Stake</th>
+            <th>Signal</th>
+            <th>Links</th>
+            <th>Save</th>
           </tr>
         </thead>
         <tbody id="resultsBody"></tbody>
       </table>
     </div>
   </div>
-  <div class="warn">⚠ Immer Quoten auf Betinasia und Betfair/Singbet prüfen bevor du wettest.</div>
+  <div class="warn">⚠ Immer Quoten auf Betinasia und Bet365 prüfen bevor du wettest. EV ist eine mathematische Schätzung — kein Gewinnversprechen.</div>
 </div>
 
 <hr/>
 
+<!-- SAVED BETS -->
 <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
   <div class="stitle" style="margin:0;">Gespeicherte Wetten</div>
   <div style="display:flex;gap:6px;">
-    <button class="btn btn-ghost btn-sm" onclick="exportCSV()">⬇ CSV</button>
+    <button class="btn btn-ghost btn-sm" onclick="exportCSV()">⬇ CSV Export</button>
     <button class="btn btn-red btn-sm" onclick="clearAllBets()">Alle löschen</button>
   </div>
 </div>
 <div class="sum-row">
   <div class="sum-box"><div class="sl">Total</div><div class="sv" id="sumTotal">0</div></div>
   <div class="sum-box"><div class="sl">Settled</div><div class="sv" id="sumSettled">0</div></div>
-  <div class="sum-box"><div class="sl">Eingesetzt</div><div class="sv" id="sumStaked">EUR 0</div></div>
-  <div class="sum-box"><div class="sl">P&amp;L</div><div class="sv" id="sumPnl">EUR 0</div></div>
+  <div class="sum-box"><div class="sl">Eingesetzt</div><div class="sv" id="sumStaked">EUR 0.00</div></div>
+  <div class="sum-box"><div class="sl">P&amp;L</div><div class="sv" id="sumPnl">EUR 0.00</div></div>
   <div class="sum-box"><div class="sl">ROI</div><div class="sv" id="sumRoi">--</div></div>
   <div class="sum-box"><div class="sl">Win Rate</div><div class="sv" id="sumWR">--</div></div>
 </div>
 <div class="card" style="padding:12px 14px;margin-bottom:10px;">
+  <div style="font-size:.65rem;color:var(--muted);margin-bottom:6px;">Bankroll Verlauf</div>
   <canvas id="pnlChart" height="90" style="width:100%;display:none;"></canvas>
   <div id="graphEmpty" class="empty" style="padding:14px;font-size:.7rem;">Graph erscheint nach erster gesettleter Wette.</div>
 </div>
 <div class="card" style="padding:0;overflow:hidden;">
   <div class="tbl-wrap">
     <table class="stbl">
-      <thead><tr><th>#</th><th>Match / Seite</th><th>HC</th><th>Referenz</th><th>Betinasia</th><th>EV%</th><th>Einsatz</th><th>Empfohlen</th><th>P&amp;L</th><th>Ergebnis</th><th>Del</th></tr></thead>
+      <thead><tr><th>#</th><th>Match / Seite</th><th>HC</th><th>Bet365</th><th>Betinasia</th><th>EV%</th><th>Einsatz</th><th>Empfohlen</th><th>P&amp;L</th><th>Ergebnis</th><th>Del</th></tr></thead>
       <tbody id="betsBody"></tbody>
     </table>
   </div>
   <div id="emptyState" class="empty">Noch keine Wetten gespeichert.</div>
 </div>
+<div class="hint" style="margin-top:6px;">Wetten werden in deinem Browser gespeichert. Regelmäßig CSV exportieren!</div>
 </div>
 
 <script>
-// ══ ODDSPAPI MARKET IDs ══
-// Asian Handicap market IDs — each line is a separate market
-var AH_MARKETS = {
-  '-2.5': {market:'1056', homeOut:'1056', awayOut:'1057'},
-  '-2.0': {market:'1058', homeOut:'1058', awayOut:'1059'},
-  '-1.5': {market:'1060', homeOut:'1060', awayOut:'1061'},
-  '-1.0': {market:'1064', homeOut:'1064', awayOut:'1065'},
-  '-0.75':{market:'1066', homeOut:'1066', awayOut:'1067'},
-  '-0.5': {market:'1068', homeOut:'1068', awayOut:'1069'},
-  '-0.25':{market:'1070', homeOut:'1070', awayOut:'1071'},
-  '0':    {market:'1072', homeOut:'1072', awayOut:'1073'},
-  '+0.25':{market:'1074', homeOut:'1074', awayOut:'1075'},
-  '+0.5': {market:'1076', homeOut:'1076', awayOut:'1077'},
-  '+0.75':{market:'1078', homeOut:'1078', awayOut:'1079'},
-  '+1.0': {market:'1080', homeOut:'1080', awayOut:'1081'},
-  '+1.5': {market:'1082', homeOut:'1082', awayOut:'1083'},
-  '+2.0': {market:'1084', homeOut:'1084', awayOut:'1085'},
-  '+2.5': {market:'1086', homeOut:'1086', awayOut:'1087'},
-};
-
-var OP_BASE = 'https://api.oddspapi.io/v4';
-
 // ══ MATHS ══
-function evPercent(trueP, bkOdds){return trueP*(bkOdds-1)-(1-trueP);}
+function evPercent(trueP,bkOdds){return trueP*(bkOdds-1)-(1-trueP);}
 function kellyFrac(p,odds){var b=odds-1;return(b*p-(1-p))/b;}
-function recStakeCalc(bkr,p,odds,kPct,maxPct){var kf=kellyFrac(p,odds);if(kf<=0)return 0;return Math.min(bkr*kf*(kPct/100),bkr*(maxPct/100));}
-function calcPnL(r,s,o){if(r==='win')return s*(o-1);if(r==='loss')return -s;if(r==='void')return 0;if(r==='half_win')return s*(o-1)/2;if(r==='half_loss')return -s/2;return null;}
+function recStakeCalc(bkr,p,odds,kPct,maxPct){
+  var kf=kellyFrac(p,odds);
+  if(kf<=0)return 0;
+  return Math.min(bkr*kf*(kPct/100),bkr*(maxPct/100));
+}
+function calcPnL(r,s,o){
+  if(r==='win')return s*(o-1);
+  if(r==='loss')return -s;
+  if(r==='void')return 0;
+  if(r==='half_win')return s*(o-1)/2;
+  if(r==='half_loss')return -s/2;
+  return null;
+}
+// Fair probability from Bet365 (remove overround from both sides)
+function fairProbFromB365(homeOdds,awayOdds){
+  var total=1/homeOdds+1/awayOdds;
+  return{home:(1/homeOdds)/total,away:(1/awayOdds)/total};
+}
 function ps(v){return v!=null?(v>=0?'+':'')+(v*100).toFixed(2)+'%':'--';}
 function eur(v){return v!=null?'EUR '+v.toFixed(2):'--';}
 function gv(id){return parseFloat(document.getElementById(id).value)||0;}
 
-// Fair prob from sharp bookmaker (remove ~2% margin)
-function fairProbFromSharp(homeOdds, awayOdds){
-  var total = 1/homeOdds + 1/awayOdds;
-  return {home: (1/homeOdds)/total, away: (1/awayOdds)/total};
-}
-
-// ══ KEYS & SETTINGS ══
-function saveKeys(){
-  var op=document.getElementById('opKey').value.trim();
-  if(op)localStorage.setItem('be_opkey',op);
-  updateKeyStatus();
-}
-function loadKeys(){
-  var op=localStorage.getItem('be_opkey');
-  if(op)document.getElementById('opKey').value=op;
-  updateKeyStatus();
-}
+// ══ KEY & SETTINGS ══
+function saveKey(){var k=document.getElementById('apiKey').value.trim();if(k)localStorage.setItem('be_apikey',k);updateKeyStatus();}
+function loadKey(){var k=localStorage.getItem('be_apikey');if(k){document.getElementById('apiKey').value=k;}updateKeyStatus();}
 function updateKeyStatus(){
-  var op=document.getElementById('opKey').value.trim();
-  var el=document.getElementById('opStatus');
-  if(op&&op.length>10){el.className='kstat ok';el.textContent='✓ Key set';}
+  var k=document.getElementById('apiKey').value.trim();
+  var el=document.getElementById('keyStatus');
+  if(k&&k.length>10){el.className='kstat ok';el.textContent='✓ Key set';}
   else{el.className='kstat miss';el.textContent='Not set';}
 }
-function saveSettings(){
-  ['bankroll','kellyPct','maxCap','minEV','suspectThr','refBook'].forEach(function(id){
-    localStorage.setItem('be_'+id, document.getElementById(id).value);
-  });
-}
+function getKey(){return document.getElementById('apiKey').value.trim();}
+function saveSetting(k,v){localStorage.setItem('be_'+k,v);}
 function loadSettings(){
-  ['bankroll','kellyPct','maxCap','minEV','suspectThr','refBook'].forEach(function(id){
-    var v=localStorage.getItem('be_'+id);
-    if(v)document.getElementById(id).value=v;
-  });
+  var m={bankroll:'be_bankroll',kellyPct:'be_kelly',maxCap:'be_maxcap',minEV:'be_minev',suspectThr:'be_suspect'};
+  Object.keys(m).forEach(function(id){var v=localStorage.getItem(m[id]);if(v)document.getElementById(id).value=v;});
 }
 
-// ══ ODDSPAPI CALLS (via Netlify proxy) ══
-async function opGet(endpoint, params){
-  var key = document.getElementById('opKey').value.trim();
-  if(!key)throw new Error('Kein OddsPapi API Key');
-  var url = OP_BASE + endpoint + '?apiKey=' + encodeURIComponent(key);
-  if(params)Object.keys(params).forEach(function(k){url+='&'+k+'='+encodeURIComponent(params[k]);});
-  var proxyUrl = '/.netlify/functions/proxy?url=' + encodeURIComponent(url);
-  var resp = await fetch(proxyUrl);
-  if(!resp.ok){var e=await resp.json().catch(function(){return{};});throw new Error(e.error||('API Fehler '+resp.status));}
-  return resp.json();
+// ══ IMAGE HANDLING ══
+var _b365Image=null,_b365Type=null;
+
+function handleFile(event){
+  var file=event.target.files[0];
+  if(file)processImage(file);
 }
-
-// Search for a fixture by team names — flexible matching
-async function findFixture(homeTeam, awayTeam){
-  var today = new Date();
-  var past = new Date(today.getTime() - 24*3600000);
-  var future = new Date(today.getTime() + 7*24*3600000);
-  var from = past.toISOString().slice(0,10);
-  var to = future.toISOString().slice(0,10);
-
-  var data = await opGet('/fixtures', {sportId:10, from:from, to:to});
-  if(!Array.isArray(data)||!data.length)return null;
-
-  var ht = homeTeam.toLowerCase().replace(/^(sk|fc|ac|as|rc|cf|cd|us|ss|sc|rb|bv|vfb|vfl|tsg|tsv|fsv|sv|rv|1\.fc|1\.fk|red bull|borussia|bayer|hannover|hamburger|werder|hertha|fortuna|arminia|eintracht|schalke|kaisers|koeln|köln|leverkusen|münchen|munich|dortmund|berlin|bremen|mainz|freiburg|augsburg|wolfsburg|hoffenheim|gladbach|stuttgart|frankfurt|hamburg|graz|wien|vienna|rapid|sturm|austria|salzburg|lask|wac|altach|ried|hartberg|tirol|wolfsberg|linz)/i, '').trim();
-  var at = awayTeam.toLowerCase().replace(/^(sk|fc|ac|as|rc|cf|cd|us|ss|sc|rb|bv|vfb|vfl|tsg|tsv|fsv|sv|rv|1\.fc|1\.fk|red bull|borussia|bayer|hannover|hamburger|werder|hertha|fortuna|arminia|eintracht|schalke|kaisers|koeln|köln|leverkusen|münchen|munich|dortmund|berlin|bremen|mainz|freiburg|augsburg|wolfsburg|hoffenheim|gladbach|stuttgart|frankfurt|hamburg|graz|wien|vienna|rapid|sturm|austria|salzburg|lask|wac|altach|ried|hartberg|tirol|wolfsberg|linz)/i, '').trim();
-
-  // Also keep original for matching
-  var htOrig = homeTeam.toLowerCase();
-  var atOrig = awayTeam.toLowerCase();
-
-  function similarity(a, b){
-    if(!a||!b)return 0;
-    a=a.toLowerCase();b=b.toLowerCase();
-    if(a===b)return 10;
-    if(a.includes(b)||b.includes(a))return 8;
-    // Check word overlap
-    var wa=a.split(/\s+/),wb=b.split(/\s+/);
-    var common=wa.filter(function(w){return w.length>2&&wb.some(function(x){return x.includes(w)||w.includes(x);});});
-    if(common.length>0)return common.length*3;
-    // Check first 4 chars
-    if(a.slice(0,4)===b.slice(0,4))return 4;
-    if(a.slice(0,3)===b.slice(0,3))return 3;
-    return 0;
-  }
-
-  var best = null, bestScore = 0;
-  data.forEach(function(f){
-    var p1 = (f.participant1Name||'').toLowerCase();
-    var p2 = (f.participant2Name||'').toLowerCase();
-    var s1h = Math.max(similarity(p1,htOrig), similarity(p1,ht));
-    var s2a = Math.max(similarity(p2,atOrig), similarity(p2,at));
-    var score = s1h + s2a;
-    if(score>bestScore){bestScore=score;best=f;}
-  });
-
-  // Need at least some match on both teams
-  if(bestScore<3)return null;
-
-  console.log('Found fixture:', best.participant1Name, 'vs', best.participant2Name, 'score:', bestScore);
-  return best;
+function handleDrop(event){
+  event.preventDefault();
+  var file=event.dataTransfer.files[0];
+  if(file)processImage(file);
 }
-
-// Get Asian Handicap odds for a fixture from reference bookmaker
-async function getRefOdds(fixtureId, marketIds){
-  var refBook = document.getElementById('refBook').value;
-  var data = await opGet('/odds', {fixtureId: fixtureId});
-  var bookOdds = data.bookmakerOdds;
-  if(!bookOdds)return {};
-
-  // Try preferred book first, then fallbacks
-  var bookOrder = [refBook, 'singbet', 'betfair', 'pinnacle', 'bet365'];
-  var refData = null;
-  var usedBook = '';
-  for(var i=0;i<bookOrder.length;i++){
-    if(bookOdds[bookOrder[i]]){refData=bookOdds[bookOrder[i]];usedBook=bookOrder[i];break;}
-  }
-  if(!refData)return {};
-
-  var result = {book: usedBook, lines: {}};
-  var markets = refData.markets||{};
-
-  // Extract odds for each AH market
-  Object.keys(AH_MARKETS).forEach(function(hc){
-    var mktInfo = AH_MARKETS[hc];
-    var mkt = markets[mktInfo.market];
-    if(!mkt)return;
-    var outcomes = mkt.outcomes||{};
-    var homeOut = outcomes[mktInfo.homeOut];
-    var awayOut = outcomes[mktInfo.awayOut];
-    var homeOdds = homeOut&&homeOut.players&&homeOut.players['0']?parseFloat(homeOut.players['0'].price):null;
-    var awayOdds = awayOut&&awayOut.players&&awayOut.players['0']?parseFloat(awayOut.players['0'].price):null;
-    if(homeOdds&&awayOdds&&homeOdds>1&&awayOdds>1){
-      result.lines[hc] = {home:homeOdds, away:awayOdds};
+document.addEventListener('paste',function(e){
+  var items=e.clipboardData&&e.clipboardData.items;
+  if(!items)return;
+  for(var i=0;i<items.length;i++){
+    if(items[i].type.indexOf('image')!==-1){
+      processImage(items[i].getAsFile());
+      break;
     }
-  });
-
-  return result;
+  }
+});
+function processImage(file){
+  if(!file)return;
+  _b365Type=file.type||'image/png';
+  var reader=new FileReader();
+  reader.onload=function(e){
+    _b365Image=e.target.result.split(',')[1];
+    var prev=document.getElementById('prevB365');
+    prev.src=e.target.result;
+    prev.style.display='block';
+  };
+  reader.readAsDataURL(file);
 }
 
-// ══ BETINASIA PARSER ══
+// ══ BETINASIA TEXT PARSER ══
 function normHC(hc){
   var s=hc.toString().trim().replace(/\s+/g,'');
-  var parts=[];var current='';
+  var parts=[],current='';
   for(var i=0;i<s.length;i++){
     var c=s[i];
     if(c===','){
-      var prevIsDigit=i>0&&/\d/.test(s[i-1]);
-      var nextIsSign=i<s.length-1&&/[-+\d]/.test(s[i+1]);
-      var alreadyHasDot=current.indexOf('.')!==-1;
-      var nextIsMinus=i<s.length-1&&s[i+1]==='-';
-      var nextIsPlus=i<s.length-1&&s[i+1]==='+';
-      if(prevIsDigit&&nextIsSign&&(alreadyHasDot||nextIsMinus||nextIsPlus)){
+      var prevDigit=i>0&&/\d/.test(s[i-1]);
+      var nextSign=i<s.length-1&&/[-+\d]/.test(s[i+1]);
+      var hasDot=current.indexOf('.')!==-1;
+      var nextMinus=i<s.length-1&&s[i+1]==='-';
+      var nextPlus=i<s.length-1&&s[i+1]==='+';
+      if(prevDigit&&nextSign&&(hasDot||nextMinus||nextPlus)){
         parts.push(current);current='';
       } else {current+='.';} 
     } else {current+=c;}
   }
   if(current)parts.push(current);
-  parts=parts.map(function(p){return p.replace(/,/g,'.');});
-  var joined=parts.join(',');
-  // Normalize: remove leading + for positive values
-  joined=joined.replace(/^\+/,'');
-  return joined;
+  return parts.map(function(p){return p.replace(/,/g,'.');}).join(',');
 }
 
 function parseBiasText(text){
   if(!text||!text.trim())return null;
-  var lines=text.trim().split('\n').map(function(l){return l.trim();}).filter(function(l){return l.length>0;});
-  var lines2=[];
-  lines.forEach(function(l){if(!/^asian|^handicap|^draw/i.test(l))lines2.push(l);});
+  var lines=text.trim().split('\n').map(function(l){return l.trim();}).filter(Boolean);
+  // Remove header lines
+  var lines2=lines.filter(function(l){return!/^asian|^handicap|^draw no bet/i.test(l);});
 
-  // Auto-detect team abbreviations
-  var teamAbbrevs=[];
+  // Auto-detect team abbreviations (uppercase letters followed by a digit)
+  var abbrevs=[];
   lines2.forEach(function(l){
-    var m=l.match(/^([A-Z]{2,5})(\d)/);
-    if(m&&teamAbbrevs.indexOf(m[1])===-1)teamAbbrevs.push(m[1]);
+    var m=l.match(/^([A-Z]{2,5})\d/);
+    if(m&&abbrevs.indexOf(m[1])===-1)abbrevs.push(m[1]);
   });
+  if(abbrevs.length<2){
+    // Try 3-letter at start
+    lines2.forEach(function(l){
+      var m=l.match(/^([A-Z]{2,4})\d/);
+      if(m&&abbrevs.indexOf(m[1])===-1)abbrevs.push(m[1]);
+    });
+  }
 
-  var homeTeamInput=document.getElementById('homeTeam').value.trim();
-  var awayTeamInput=document.getElementById('awayTeam').value.trim();
-  var homeTeam=homeTeamInput||teamAbbrevs[0]||'Heim';
-  var awayTeam=awayTeamInput||teamAbbrevs[1]||'Ausw.';
-  var homeAbbr=teamAbbrevs[0]||(homeTeam.toUpperCase().slice(0,3));
-  var awayAbbr=teamAbbrevs[1]||(awayTeam.toUpperCase().slice(0,3));
+  var homeAbbr=abbrevs[0]||'';
+  var awayAbbr=abbrevs[1]||'';
 
-  if(!homeTeamInput&&homeTeam)document.getElementById('homeTeam').value=homeTeam;
-  if(!awayTeamInput&&awayTeam)document.getElementById('awayTeam').value=awayTeam;
-
-  var result={homeTeam:homeTeam,awayTeam:awayTeam,homeAbbr:homeAbbr,awayAbbr:awayAbbr,lines:[]};
+  var result={homeAbbr:homeAbbr,awayAbbr:awayAbbr,lines:[]};
   var i=0;
   while(i<lines2.length){
     var l=lines2[i];
+    // Handicap line: starts with digit, +, or - followed by digit, no uppercase letters
     if(/^[+\-]?\d/.test(l)&&!/[A-Z]/.test(l)){
       var hc=normHC(l);
       var homeOdds=null,awayOdds=null;
       var j=i+1;
+      // Look ahead up to 3 lines for odds
       while(j<lines2.length&&j<=i+3){
         var lj=lines2[j];
+        // Stop if next handicap line
         if(/^[+\-]?\d/.test(lj)&&!/[A-Z]/.test(lj))break;
-        var mH=lj.match(new RegExp('^'+homeAbbr+'(\\d+\\.\\d+)'));
-        var mA=lj.match(new RegExp('^'+awayAbbr+'(\\d+\\.\\d+)'));
-        if(mH)homeOdds=parseFloat(mH[1]);
-        if(mA)awayOdds=parseFloat(mA[1]);
+        if(homeAbbr){
+          var mH=lj.match(new RegExp('^'+homeAbbr+'(\\d+\\.\\d+)$'));
+          if(mH)homeOdds=parseFloat(mH[1]);
+        }
+        if(awayAbbr){
+          var mA=lj.match(new RegExp('^'+awayAbbr+'(\\d+\\.\\d+)$'));
+          if(mA)awayOdds=parseFloat(mA[1]);
+        }
         j++;
       }
-      if(homeOdds&&homeOdds>1){
-        result.lines.push({handicap:hc,homeOdds:homeOdds,awayOdds:awayOdds});
+      // Only add if at least home odds found and valid
+      if(homeOdds&&homeOdds>1.01&&homeOdds<50){
+        result.lines.push({handicap:hc,homeOdds:homeOdds,awayOdds:(awayOdds&&awayOdds>1.01&&awayOdds<50)?awayOdds:null});
         i=j;
       } else {i++;}
     } else {i++;}
@@ -455,83 +389,45 @@ function parseBiasText(text){
   return result.lines.length>0?result:null;
 }
 
-// ══ FIXTURE SEARCH ══
-var _allFixtures = [];
+// ══ BET365 AI EXTRACTION ══
+async function extractB365Odds(b64,imgType,homeAbbr,awayAbbr){
+  var key=getKey();
+  if(!key)throw new Error('Kein API Key gesetzt');
 
-async function searchFixtures(){
-  var query = document.getElementById('searchQuery').value.trim().toLowerCase();
-  if(!query){alert('Bitte einen Suchbegriff eingeben.');return;}
-  if(!document.getElementById('opKey').value.trim()){alert('Bitte OddsPapi API Key eintragen.');return;}
+  // Build Bet365 prompt — Bet365 First reads, then we pass known handicaps
+  var prompt='This is a Bet365 Alternative Asian Handicap screenshot.\n\nExtract ALL lines visible — including combined lines like "-0.5, -1.0" and simple lines like "-0.5".\n\nLayout: TWO columns side by side.\n- LEFT column = home team ('+homeAbbr+')\n- RIGHT column = away team ('+awayAbbr+')\n\nFor EACH row extract:\n1. The handicap label EXACTLY as shown (e.g. "-0.5, -1.0" or "-0.5" or "0.0")\n2. The odds number next to it\n\nPair each home row with the away row on the same line.\n\nReturn ONLY this JSON:\n{"lines":[{"handicap":"-1.5","homeOdds":4.100,"awayOdds":1.195},{"handicap":"-0.5","homeOdds":2.150,"awayOdds":1.645},{"handicap":"0.0","homeOdds":1.595,"awayOdds":2.250},{"handicap":"-0.5, -1.0","homeOdds":1.295,"awayOdds":3.300}]}\n\nInclude ALL lines. If nothing found: {"error":"not found"}';
 
-  var sel = document.getElementById('fixtureSelect');
-  sel.innerHTML = '<option>Suche läuft...</option>';
-  _allFixtures = []; // Always fetch fresh
+  var resp=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key':key,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body:JSON.stringify({
+      model:'claude-haiku-4-5-20251001',
+      max_tokens:3000,
+      messages:[{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:imgType,data:b64}},
+        {type:'text',text:prompt}
+      ]}]
+    })
+  });
 
-  try{
-    if(!_allFixtures.length){
-      var today=new Date();
-      var past=new Date(today.getTime()-24*3600000); // 1 day back
-      var future=new Date(today.getTime()+7*24*3600000); // 7 days forward
-      var data=await opGet('/fixtures',{sportId:10,from:past.toISOString().slice(0,10),to:future.toISOString().slice(0,10)});
-      _allFixtures=Array.isArray(data)?data:[];
-    }
-
-    var results=_allFixtures.filter(function(f){
-      var p1=(f.participant1Name||'').toLowerCase();
-      var p2=(f.participant2Name||'').toLowerCase();
-      return p1.includes(query)||p2.includes(query);
-    });
-
-    sel.innerHTML='<option value="">— '+results.length+' Ergebnisse —</option>';
-    results.forEach(function(f){
-      var opt=document.createElement('option');
-      opt.value=f.fixtureId||f.id;
-      opt.textContent=f.participant1Name+' vs '+f.participant2Name+' ('+f.tournamentName+')';
-      opt.dataset.home=f.participant1Name;
-      opt.dataset.away=f.participant2Name;
-      sel.appendChild(opt);
-    });
-
-    if(results.length===0){
-      sel.innerHTML='<option>Keine Ergebnisse — anderen Begriff versuchen</option>';
-    }
-  }catch(e){
-    sel.innerHTML='<option>Fehler: '+e.message+'</option>';
+  if(!resp.ok){
+    var e=await resp.json().catch(function(){return{};});
+    throw new Error(e.error&&e.error.message?e.error.message:'API Fehler '+resp.status);
   }
-}
-
-function onFixtureSelected(){
-  var sel=document.getElementById('fixtureSelect');
-  var opt=sel.options[sel.selectedIndex];
-  if(!opt||!opt.value)return;
-  document.getElementById('homeTeam').value=opt.dataset.home||'';
-  document.getElementById('awayTeam').value=opt.dataset.away||'';
-  document.getElementById('selectedFixtureId').value=opt.value;
-  var info=document.getElementById('selectedFixture');
-  info.textContent='✓ Ausgewählt: '+opt.textContent;
-  info.style.display='block';
-}
-
-// ══ DEBUG ══
-async function debugFixtures(){
-  if(!document.getElementById('opKey').value.trim()){alert('Bitte OddsPapi API Key eintragen.');return;}
-  var box=document.getElementById('debugBox');
-  box.style.display='block';
-  box.innerHTML='<span class="spinner"></span> Suche Spiele bei OddsPapi...';
-  try{
-    var today=new Date();
-    var past=new Date(today.getTime()-24*3600000);
-    var future=new Date(today.getTime()+7*24*3600000);
-    var from=past.toISOString().slice(0,10);
-    var to=future.toISOString().slice(0,10);
-    var data=await opGet('/fixtures',{sportId:10,from:from,to:to});
-    if(!Array.isArray(data)||!data.length){box.innerHTML='Keine Spiele gefunden für '+from+' bis '+to;return;}
-    var html='<strong>'+data.length+' Spiele gefunden ('+from+' bis '+to+'):</strong><br>';
-    data.forEach(function(f){
-      html+='<span style="color:var(--blue)">'+f.participant1Name+'</span> vs <span style="color:var(--amber)">'+f.participant2Name+'</span> — '+f.tournamentName+' — ID: '+f.fixtureId+'<br>';
-    });
-    box.innerHTML=html;
-  }catch(e){box.innerHTML='Fehler: '+e.message;}
+  var d=await resp.json();
+  var text='';
+  if(d.content)d.content.forEach(function(b){if(b.type==='text')text+=b.text;});
+  text=text.trim().replace(/^```json\s*/,'').replace(/\s*```$/,'').replace(/^```\s*/,'').trim();
+  try{return JSON.parse(text);}catch(e){
+    var m=text.match(/\{[\s\S]+\}/);
+    if(m)try{return JSON.parse(m[0]);}catch(e2){}
+    throw new Error('Konnte Bet365 Screenshot nicht lesen. Klareres Bild versuchen.');
+  }
 }
 
 // ══ MAIN ANALYSIS ══
@@ -540,101 +436,92 @@ var _lastRows=[];
 async function analyseAll(){
   var biaText=document.getElementById('biaText').value.trim();
   if(!biaText){alert('Bitte Betinasia Text einfügen.');return;}
-  if(!document.getElementById('opKey').value.trim()){alert('Bitte OddsPapi API Key eintragen.');return;}
+  if(!_b365Image){alert('Bitte Bet365 Screenshot hochladen.');return;}
+  if(!getKey()){alert('Bitte Anthropic API Key eintragen.');return;}
 
   setStatus('loading','<span class="spinner"></span> Betinasia Text wird geparst...');
   document.getElementById('resultsSection').style.display='none';
   document.getElementById('analyseBtn').disabled=true;
 
   try{
+    // Step 1: Parse Betinasia
     var biaData=parseBiasText(biaText);
     if(!biaData||!biaData.lines.length){
-      setStatus('error','Konnte Betinasia Text nicht lesen.');
+      setStatus('error','Konnte Betinasia Text nicht lesen. Bitte Format prüfen.');
       document.getElementById('analyseBtn').disabled=false;
       return;
     }
 
-    var el=document.getElementById('biaExtracted');
-    el.innerHTML='<div style="font-size:.65rem;color:var(--muted);margin-top:4px;"><strong>Gelesen:</strong> '+biaData.lines.length+' Linien — '+biaData.homeAbbr+' vs '+biaData.awayAbbr+' — ';
-    biaData.lines.forEach(function(l){el.innerHTML+='<span class="tag">'+l.handicap+'</span>';});
-    el.innerHTML+='</div>';
-    el.style.display='block';
+    // Show Betinasia extracted data
+    var biaEl=document.getElementById('biaExtracted');
+    biaEl.innerHTML='<strong>Gelesen '+biaData.lines.length+' Linien ('+biaData.homeAbbr+' vs '+biaData.awayAbbr+'):</strong> ';
+    biaData.lines.forEach(function(l){biaEl.innerHTML+='<span class="tag">'+l.handicap+'</span>';});
+    biaEl.style.display='block';
 
-    // Find fixture at OddsPapi
-    var homeTeam=document.getElementById('homeTeam').value.trim()||biaData.homeTeam;
-    var awayTeam=document.getElementById('awayTeam').value.trim()||biaData.awayTeam;
+    // Step 2: Extract Bet365 odds
+    setStatus('loading','<span class="spinner"></span> Bet365 Screenshot wird gelesen...');
+    var b365Data=await extractB365Odds(_b365Image,_b365Type,biaData.homeAbbr,biaData.awayAbbr);
+    if(b365Data.error){
+      setStatus('error','Bet365 Screenshot konnte nicht gelesen werden: '+b365Data.error);
+      document.getElementById('analyseBtn').disabled=false;
+      return;
+    }
+    if(!b365Data.lines||!b365Data.lines.length){
+      setStatus('error','Keine Linien im Bet365 Screenshot gefunden.');
+      document.getElementById('analyseBtn').disabled=false;
+      return;
+    }
 
-    setStatus('loading','<span class="spinner"></span> Suche Spiel bei OddsPapi: '+homeTeam+' vs '+awayTeam+'...');
-    // Use selected fixture ID if available, otherwise search by name
-    var fixture=null;
-    var selectedId=document.getElementById('selectedFixtureId').value;
-    if(selectedId){
-      // Find in cached fixtures
-      fixture=_allFixtures.find(function(f){return (f.fixtureId||f.id)==selectedId;});
-      if(!fixture){
-        // Create minimal fixture object
-        var sel=document.getElementById('fixtureSelect');
-        var opt=sel.options[sel.selectedIndex];
-        if(opt&&opt.value){
-          fixture={fixtureId:selectedId,id:selectedId,participant1Name:opt.dataset.home,participant2Name:opt.dataset.away};
-        }
+    // Show Bet365 extracted data
+    var b365El=document.getElementById('b365Extracted');
+    b365El.innerHTML='<strong>Gelesen '+b365Data.lines.length+' Linien:</strong> ';
+    b365Data.lines.forEach(function(l){b365El.innerHTML+='<span class="tag">'+l.handicap+'</span>';});
+    b365El.style.display='block';
+
+    // Step 3: Build Bet365 lookup map
+    var b365Map={};
+    b365Data.lines.forEach(function(l){
+      if(l.homeOdds&&l.awayOdds&&l.homeOdds>1&&l.awayOdds>1){
+        b365Map[normHC(l.handicap)]={home:l.homeOdds,away:l.awayOdds};
       }
-    }
+    });
 
-    if(!fixture){
-      fixture=await findFixture(homeTeam,awayTeam);
-    }
-
-    if(!fixture){
-      setStatus('error','Spiel nicht gefunden. Bitte nutze die Suchfunktion oben um das Spiel auszuwählen.');
-      document.getElementById('analyseBtn').disabled=false;
-      return;
-    }
-
-    setStatus('loading','<span class="spinner"></span> Hole Referenzquoten für '+fixture.participant1Name+' vs '+fixture.participant2Name+'...');
-    var refBook=document.getElementById('refBook').value;
-    document.getElementById('thRef').textContent=refBook.charAt(0).toUpperCase()+refBook.slice(1)+' (Referenz)';
-
-    var refOdds=await getRefOdds(fixture.fixtureId||fixture.id, Object.keys(AH_MARKETS));
-
-    if(!Object.keys(refOdds.lines||{}).length){
-      setStatus('error','Keine Referenzquoten gefunden. Versuche anderen Referenz-Buchmacher in den Settings.');
-      document.getElementById('analyseBtn').disabled=false;
-      return;
-    }
-
-    setStatus('loading','<span class="spinner"></span> Berechne EV...');
-
+    // Step 4: Compare and calculate EV
+    setStatus('loading','<span class="spinner"></span> EV wird berechnet...');
+    var rows=[];
     var bkr=gv('bankroll'),kPct=gv('kellyPct'),cap=gv('maxCap');
     var minEV=gv('minEV')/100,suspectThr=gv('suspectThr')/100;
-    var rows=[];
-    var matchName=fixture.participant1Name+' vs '+fixture.participant2Name;
+    var matchName=biaData.homeAbbr+' vs '+biaData.awayAbbr;
 
     biaData.lines.forEach(function(l){
-      var refLine=refOdds.lines[l.handicap];
-      if(!refLine)return; // No ref odds for this line
+      var key=normHC(l.handicap);
+      var b365=b365Map[key];
+      if(!b365)return; // No matching Bet365 line — skip
 
       ['home','away'].forEach(function(side){
         var biaOdds=side==='home'?l.homeOdds:l.awayOdds;
-        var refOddsVal=side==='home'?refLine.home:refLine.away;
-        if(!biaOdds||biaOdds<=1||!refOddsVal||refOddsVal<=1)return;
+        var b365Odds=b365[side];
+        if(!biaOdds||biaOdds<=1||!b365Odds||b365Odds<=1)return;
 
-        var sideLabel=side==='home'?biaData.homeTeam:biaData.awayTeam;
-
-        // Fair probability from reference book (remove overround)
-        var fp=fairProbFromSharp(refLine.home,refLine.away);
+        // Fair probability: remove Bet365 overround
+        var fp=fairProbFromB365(b365.home,b365.away);
         var trueP=side==='home'?fp.home:fp.away;
 
         var ev=evPercent(trueP,biaOdds);
         var rec=bkr>0?recStakeCalc(bkr,trueP,biaOdds,kPct,cap):null;
-        var diff=biaOdds-refOddsVal;
+        var diff=biaOdds-b365Odds;
         var isSuspect=Math.abs(ev)>suspectThr;
         var hasValue=ev>=minEV&&!isSuspect;
+        var sideLabel=side==='home'?biaData.homeAbbr:biaData.awayAbbr;
 
         rows.push({
-          hc:l.handicap,side:sideLabel,
-          biaOdds:biaOdds,refOdds:refOddsVal,
-          trueP:trueP,ev:ev,rec:rec,diff:diff,
+          hc:l.handicap,
+          side:sideLabel,
+          biaOdds:biaOdds,
+          b365Odds:b365Odds,
+          b365OddsEdit:b365Odds, // editable copy
+          trueP:trueP,
+          ev:ev,rec:rec,diff:diff,
           hasValue:hasValue,isSuspect:isSuspect,
           matchName:matchName,
           bankroll:bkr,kPct:kPct,maxCap:cap
@@ -642,6 +529,7 @@ async function analyseAll(){
       });
     });
 
+    // Sort: value first, then by EV desc
     rows.sort(function(a,b){
       if(a.hasValue&&!b.hasValue)return -1;
       if(!a.hasValue&&b.hasValue)return 1;
@@ -649,7 +537,7 @@ async function analyseAll(){
     });
 
     _lastRows=rows;
-    renderResults(rows,biaData,refOdds.book);
+    renderResults(rows,biaData,b365Data);
 
   }catch(err){
     setStatus('error','⚠ Fehler: '+err.message);
@@ -657,30 +545,47 @@ async function analyseAll(){
   document.getElementById('analyseBtn').disabled=false;
 }
 
-function renderResults(rows,biaData,usedBook){
+// ══ RENDER RESULTS ══
+function renderResults(rows,biaData,b365Data){
   var valueBets=rows.filter(function(r){return r.hasValue;});
   document.getElementById('statsGrid').innerHTML=
     '<div class="stat-box"><div class="sl">Betinasia Linien</div><div class="sv">'+biaData.lines.length+'</div></div>'+
-    '<div class="stat-box"><div class="sl">Verglichene Linien</div><div class="sv">'+rows.length+'</div></div>'+
+    '<div class="stat-box"><div class="sl">Bet365 Linien</div><div class="sv">'+b365Data.lines.length+'</div></div>'+
+    '<div class="stat-box"><div class="sl">Verglichen</div><div class="sv">'+rows.length+'</div></div>'+
     '<div class="stat-box"><div class="sl">Value Bets</div><div class="sv" style="color:var(--green)">'+valueBets.length+'</div></div>'+
-    '<div class="stat-box"><div class="sl">Referenz</div><div class="sv" style="font-size:.8rem">'+usedBook+'</div></div>';
+    '<div class="stat-box"><div class="sl">Bestes EV</div><div class="sv" style="color:var(--green)">'+(valueBets.length?ps(valueBets[0].ev):'--')+'</div></div>';
 
-  var tbody=document.getElementById('resultsBody');tbody.innerHTML='';
+  var tbody=document.getElementById('resultsBody');
+  tbody.innerHTML='';
   rows.forEach(function(r,idx){
     var isBest=idx===0&&r.hasValue;
     var evCol=r.isSuspect?'color:var(--red)':r.ev>0?'color:var(--green)':'color:var(--red)';
-    var diffStr=r.diff>0?'<span style="color:var(--green)">+'+r.diff.toFixed(3)+'</span>':'<span style="color:var(--red)">'+r.diff.toFixed(3)+'</span>';
-    var signalHtml=r.isSuspect?'<span class="sbadge">⚠ VERIFY</span>':r.hasValue?'<span class="vbadge">BET</span>'+(isBest?'<span class="bbadge">BEST</span>':''):'<span class="nbadge">--</span>';
-    tbody.innerHTML+='<tr class="'+(r.isSuspect?'srow':r.hasValue?'vrow':'')+'">'
-      +'<td style="font-weight:600">'+r.hc+'</td>'
+    var diffStr=r.diff>0
+      ?'<span style="color:var(--green)">+'+r.diff.toFixed(3)+'</span>'
+      :'<span style="color:var(--red)">'+r.diff.toFixed(3)+'</span>';
+    var signal=r.isSuspect
+      ?'<span class="sbadge">⚠ VERIFY</span>'
+      :r.hasValue
+        ?'<span class="vbadge">BET</span>'+(isBest?'<span class="bbadge">BEST</span>':'')
+        :'<span class="nbadge">--</span>';
+
+    // Editable Bet365 field
+    var b365Input='<input type="number" id="b365e_'+idx+'" value="'+r.b365OddsEdit.toFixed(3)+'" step="0.01" min="1.01" style="width:82px;padding:3px 7px;font-size:.72rem;" onchange="recalcRow('+idx+',this.value)" title="Editierbar wenn Quote veraltet"/>';
+
+    tbody.innerHTML+='<tr id="row_'+idx+'" class="'+(r.isSuspect?'srow':r.hasValue?'vrow':'')+'">'
+      +'<td style="font-weight:600;font-family:var(--mono)">'+r.hc+'</td>'
       +'<td>'+r.side+'</td>'
-      +'<td style="font-weight:600;color:var(--green)">'+r.biaOdds.toFixed(3)+'</td>'
-      +'<td style="color:var(--blue)">'+r.refOdds.toFixed(3)+'</td>'
-      +'<td>'+diffStr+'</td>'
-      +'<td style="'+evCol+';font-weight:700">'+ps(r.ev)+'</td>'
-      +'<td style="color:var(--green)">'+(r.rec>0?eur(r.rec):'--')+'</td>'
-      +'<td>'+signalHtml+'</td>'
-      +'<td><button class="btn btn-ghost btn-sm" onclick="saveRow('+idx+')">Save</button></td>'
+      +'<td style="color:var(--green);font-weight:600">'+r.biaOdds.toFixed(3)+'</td>'
+      +'<td>'+b365Input+'<div style="font-size:.6rem;color:var(--muted);margin-top:2px;">Edit wenn veraltet</div></td>'
+      +'<td id="diff_'+idx+'">'+diffStr+'</td>'
+      +'<td id="ev_'+idx+'" style="'+evCol+';font-weight:700">'+ps(r.ev)+'</td>'
+      +'<td id="rec_'+idx+'" style="color:var(--green)">'+(r.rec>0?eur(r.rec):'--')+'</td>'
+      +'<td id="sig_'+idx+'">'+signal+'</td>'
+      +'<td style="display:flex;gap:4px;padding:6px 10px;">'
+        +'<button class="btn btn-blue btn-sm" onclick="window.open(\'https://www.betinasia.com\',\'_blank\')">BIA ↗</button>'
+        +'<button class="btn btn-amber btn-sm" onclick="window.open(\'https://www.bet365.com\',\'_blank\')">B365 ↗</button>'
+      +'</td>'
+      +'<td><button class="btn btn-sm '+(r.isSuspect?'btn-red':'btn-ghost')+'" onclick="saveRow('+idx+')">'+(r.isSuspect?'⚠ Save':'Save')+'</button></td>'
       +'</tr>';
   });
 
@@ -689,18 +594,63 @@ function renderResults(rows,biaData,usedBook){
   document.getElementById('resultsSection').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
+// ══ RECALC ROW (when B365 edited) ══
+function recalcRow(idx,newVal){
+  var r=_lastRows[idx];if(!r)return;
+  var newB365=parseFloat(newVal);
+  if(!newB365||newB365<=1||newB365>100)return;
+  r.b365OddsEdit=newB365;
+
+  // Recalculate with updated B365
+  // Get the other side's odds for overround removal
+  var otherIdx=-1;
+  var otherSide=r.side===_lastRows.filter(function(x){return x.hc===r.hc;})[0].side?null:r.side;
+  // Find matching row (same HC, other side)
+  var paired=_lastRows.find(function(x,i){return i!==idx&&x.hc===r.hc;});
+  var pairedB365=paired?paired.b365OddsEdit:r.b365OddsEdit; // fallback
+
+  // Recalc fair prob
+  var total=1/newB365+1/pairedB365;
+  var trueP=(1/newB365)/total;
+
+  var ev=evPercent(trueP,r.biaOdds);
+  var bkr=r.bankroll||gv('bankroll');
+  var rec=bkr>0?recStakeCalc(bkr,trueP,r.biaOdds,r.kPct||gv('kellyPct'),r.maxCap||gv('maxCap')):null;
+  var diff=r.biaOdds-newB365;
+  var suspectThr=gv('suspectThr')/100;
+  var isSuspect=Math.abs(ev)>suspectThr;
+  var hasValue=ev>=gv('minEV')/100&&!isSuspect;
+
+  r.trueP=trueP;r.ev=ev;r.rec=rec;r.diff=diff;r.hasValue=hasValue;r.isSuspect=isSuspect;
+
+  var diffStr=diff>0?'<span style="color:var(--green)">+'+diff.toFixed(3)+'</span>':'<span style="color:var(--red)">'+diff.toFixed(3)+'</span>';
+  document.getElementById('diff_'+idx).innerHTML=diffStr;
+  var evCol=isSuspect?'color:var(--red)':ev>0?'color:var(--green)':'color:var(--red)';
+  document.getElementById('ev_'+idx).innerHTML='<span style="'+evCol+';font-weight:700">'+ps(ev)+'</span>';
+  document.getElementById('rec_'+idx).textContent=rec>0?eur(rec):'--';
+  var sig=isSuspect?'<span class="sbadge">⚠ VERIFY</span>':hasValue?'<span class="vbadge">BET</span>':'<span class="nbadge">--</span>';
+  document.getElementById('sig_'+idx).innerHTML=sig;
+  document.getElementById('row_'+idx).className=isSuspect?'srow':hasValue?'vrow':'';
+  document.getElementById('b365e_'+idx).style.borderColor='var(--green)';
+}
+
+// ══ SAVE ROW ══
 function saveRow(idx){
   var r=_lastRows[idx];if(!r)return;
   var bets=loadBets();
   bets.unshift({
-    id:Date.now(),match:r.matchName,
-    side:r.side+' ('+r.hc+')',hc:r.hc,
-    refOdds:r.refOdds,myOdds:r.biaOdds,
-    ev:r.ev,rec:r.rec,stake:0,result:'pending',
+    id:Date.now(),
+    match:r.matchName,
+    side:r.side+' ('+r.hc+')',
+    hc:r.hc,
+    b365Odds:r.b365OddsEdit,
+    myOdds:r.biaOdds,
+    ev:r.ev,rec:r.rec,
+    stake:0,result:'pending',
     savedAt:new Date().toISOString()
   });
   saveBets(bets);renderBets();
-  alert('Gespeichert: '+r.side+' ('+r.hc+')\nBetinasia: '+r.biaOdds.toFixed(3)+' | EV: '+ps(r.ev));
+  alert('Gespeichert!\n'+r.side+' ('+r.hc+')\nBetinasia: '+r.biaOdds.toFixed(3)+' | EV: '+ps(r.ev)+'\nBei Betinasia wetten!');
 }
 
 function setStatus(type,msg){
@@ -709,7 +659,11 @@ function setStatus(type,msg){
 }
 function clearAll(){
   document.getElementById('biaText').value='';
+  _b365Image=null;_b365Type=null;
+  document.getElementById('prevB365').style.display='none';
+  document.getElementById('b365dz').querySelector('input').value='';
   document.getElementById('biaExtracted').style.display='none';
+  document.getElementById('b365Extracted').style.display='none';
   document.getElementById('resultsSection').style.display='none';
   document.getElementById('statusBox').style.display='none';
 }
@@ -718,9 +672,15 @@ function clearAll(){
 function loadBets(){try{return JSON.parse(localStorage.getItem('betedge_bets')||'[]');}catch(e){return[];}}
 function saveBets(b){localStorage.setItem('betedge_bets',JSON.stringify(b));}
 function deleteBet(id){if(!confirm('Löschen?'))return;saveBets(loadBets().filter(function(b){return b.id!==id;}));renderBets();}
-function clearAllBets(){if(!confirm('Alle löschen?'))return;saveBets([]);renderBets();}
-function updateResult(id,r){var bets=loadBets(),b=bets.find(function(x){return x.id===id;});if(b){b.result=r;if(r!=='pending'&&!b.settledAt)b.settledAt=new Date().toISOString();saveBets(bets);renderBets();}}
-function updateStake(id,v){var bets=loadBets(),b=bets.find(function(x){return x.id===id;});if(b){b.stake=parseFloat(v)||0;saveBets(bets);renderBets();}}
+function clearAllBets(){if(!confirm('Alle Wetten löschen?'))return;saveBets([]);renderBets();}
+function updateResult(id,r){
+  var bets=loadBets(),b=bets.find(function(x){return x.id===id;});
+  if(b){b.result=r;if(r!=='pending'&&!b.settledAt)b.settledAt=new Date().toISOString();saveBets(bets);renderBets();}
+}
+function updateStake(id,v){
+  var bets=loadBets(),b=bets.find(function(x){return x.id===id;});
+  if(b){b.stake=parseFloat(v)||0;saveBets(bets);renderBets();}
+}
 
 function renderBets(){
   var bets=loadBets(),tbody=document.getElementById('betsBody'),empty=document.getElementById('emptyState');
@@ -731,16 +691,19 @@ function renderBets(){
     var pnl=calcPnL(b.result,b.stake||0,b.myOdds);
     var pnlStr=pnl===null?'--':(pnl>=0?'+':'')+eur(pnl);
     var pnlCol=pnl===null?'':pnl>0?'color:var(--green)':pnl<0?'color:var(--red)':'';
-    var opts=['pending','win','loss','void','half_win','half_loss'].map(function(r){return'<option value="'+r+'"'+(b.result===r?' selected':'')+'>'+r.replace('_',' ')+'</option>';}).join('');
+    var bc=b.result||'pending';
+    var opts=['pending','win','loss','void','half_win','half_loss'].map(function(r){
+      return'<option value="'+r+'"'+(b.result===r?' selected':'')+'>'+r.replace('_',' ')+'</option>';
+    }).join('');
     var dateStr=b.savedAt?new Date(b.savedAt).toLocaleDateString('de-AT',{day:'2-digit',month:'2-digit'}):'--';
     tbody.innerHTML+='<tr>'
       +'<td style="color:var(--muted)">'+(bets.length-i)+'</td>'
       +'<td><div style="font-weight:600">'+b.side+'</div><div style="font-size:.65rem;color:var(--muted)">'+(b.match||'')+'</div><div style="font-size:.62rem;color:var(--muted)">'+dateStr+'</div></td>'
-      +'<td>'+b.hc+'</td>'
-      +'<td style="color:var(--blue)">'+(b.refOdds?b.refOdds.toFixed(3):'--')+'</td>'
+      +'<td style="font-family:var(--mono)">'+b.hc+'</td>'
+      +'<td style="color:var(--muted)">'+(b.b365Odds?b.b365Odds.toFixed(3):'--')+'</td>'
       +'<td style="font-weight:600">'+b.myOdds.toFixed(3)+'</td>'
       +'<td style="'+(b.ev>0?'color:var(--green)':'color:var(--red)')+'">'+ps(b.ev)+'</td>'
-      +'<td><input type="number" style="width:72px;padding:3px 6px;font-size:.72rem" value="'+(b.stake||'')+'" placeholder="EUR" onchange="updateStake('+b.id+',this.value)" min="0" step="1"/></td>'
+      +'<td><input type="number" style="width:72px;padding:3px 6px;font-size:.72rem" value="'+(b.stake||'')+'" placeholder="EUR" onchange="updateStake('+b.id+',this.value)" min="0" step="0.5"/></td>'
       +'<td style="color:var(--green)">'+(b.rec>0?eur(b.rec):'--')+'</td>'
       +'<td style="'+pnlCol+';font-weight:700">'+pnlStr+'</td>'
       +'<td><select style="padding:3px 6px;font-size:.68rem;width:auto;" onchange="updateResult('+b.id+',this.value)">'+opts+'</select></td>'
@@ -782,21 +745,57 @@ function drawGraph(bets){
   function cx(i){return pad.l+(i/(pts.length-1||1))*cW;}
   function cy(v){return pad.t+cH-(v-mn)/range*cH;}
   ctx.strokeStyle='rgba(30,42,61,.8)';ctx.lineWidth=1;
-  for(var g=0;g<=3;g++){var gy=pad.t+(g/3)*cH;ctx.beginPath();ctx.moveTo(pad.l,gy);ctx.lineTo(pad.l+cW,gy);ctx.stroke();ctx.fillStyle='#4a5a78';ctx.font='8px monospace';ctx.textAlign='right';ctx.fillText((mx-(g/3)*range).toFixed(0),pad.l-3,gy+4);}
+  for(var g=0;g<=3;g++){
+    var gy=pad.t+(g/3)*cH;
+    ctx.beginPath();ctx.moveTo(pad.l,gy);ctx.lineTo(pad.l+cW,gy);ctx.stroke();
+    ctx.fillStyle='#4a5a78';ctx.font='8px monospace';ctx.textAlign='right';
+    ctx.fillText((mx-(g/3)*range).toFixed(0),pad.l-3,gy+4);
+  }
   var lp=pts[pts.length-1],lc=lp>=startBkr?'#00d98b':'#ff3d5a';
-  ctx.beginPath();ctx.moveTo(cx(0),cy(pts[0]));for(var i=1;i<pts.length;i++)ctx.lineTo(cx(i),cy(pts[i]));ctx.strokeStyle=lc;ctx.lineWidth=2;ctx.stroke();
-  for(var i=0;i<pts.length;i++){ctx.beginPath();ctx.arc(cx(i),cy(pts[i]),3,0,Math.PI*2);ctx.fillStyle=i===0?'#4a5a78':(pts[i]>=pts[i>0?i-1:0]?'#00d98b':'#ff3d5a');ctx.fill();}
+  var fc=lp>=startBkr?'rgba(0,217,139,.07)':'rgba(255,61,90,.07)';
+  ctx.beginPath();ctx.moveTo(cx(0),cy(pts[0]));
+  for(var i=1;i<pts.length;i++)ctx.lineTo(cx(i),cy(pts[i]));
+  ctx.lineTo(cx(pts.length-1),pad.t+cH);ctx.lineTo(cx(0),pad.t+cH);
+  ctx.closePath();ctx.fillStyle=fc;ctx.fill();
+  ctx.beginPath();ctx.moveTo(cx(0),cy(pts[0]));
+  for(var i=1;i<pts.length;i++)ctx.lineTo(cx(i),cy(pts[i]));
+  ctx.strokeStyle=lc;ctx.lineWidth=2;ctx.stroke();
+  for(var i=0;i<pts.length;i++){
+    ctx.beginPath();ctx.arc(cx(i),cy(pts[i]),3,0,Math.PI*2);
+    ctx.fillStyle=i===0?'#4a5a78':(pts[i]>=(i>0?pts[i-1]:pts[0])?'#00d98b':'#ff3d5a');
+    ctx.fill();
+  }
 }
 
 function exportCSV(){
-  var bets=loadBets();if(!bets.length){alert('Keine Wetten.');return;}
-  var rows=[['#','Datum','Match','Seite','HC','Referenz','Betinasia','EV%','Einsatz','Empfohlen','PnL','Ergebnis']];
-  bets.forEach(function(b,i){var pnl=calcPnL(b.result,b.stake||0,b.myOdds);rows.push([bets.length-i,b.savedAt?new Date(b.savedAt).toLocaleDateString('de-AT'):'',b.match,b.side,b.hc,b.refOdds?b.refOdds.toFixed(3):'',b.myOdds.toFixed(3),(b.ev*100).toFixed(2)+'%',b.stake||0,b.rec?b.rec.toFixed(2):'',pnl!=null?pnl.toFixed(2):'pending',b.result]);});
+  var bets=loadBets();
+  if(!bets.length){alert('Keine Wetten zum Exportieren.');return;}
+  var rows=[['#','Datum','Match','Seite','HC','Bet365 (Ref)','Betinasia','EV%','Einsatz','Empfohlen','PnL','Ergebnis']];
+  bets.forEach(function(b,i){
+    var pnl=calcPnL(b.result,b.stake||0,b.myOdds);
+    rows.push([
+      bets.length-i,
+      b.savedAt?new Date(b.savedAt).toLocaleDateString('de-AT'):'',
+      b.match||'',b.side||'',b.hc||'',
+      b.b365Odds?b.b365Odds.toFixed(3):'',
+      b.myOdds?b.myOdds.toFixed(3):'',
+      b.ev?(b.ev*100).toFixed(2)+'%':'',
+      b.stake||0,
+      b.rec?b.rec.toFixed(2):'',
+      pnl!==null?pnl.toFixed(2):'pending',
+      b.result||'pending'
+    ]);
+  });
   var csv=rows.map(function(r){return r.map(function(c){return'"'+String(c).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
-  var a=document.createElement('a');a.href='data:text/csv,'+encodeURIComponent(csv);a.download='betedge_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='betedge_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
 }
 
-loadSettings();loadKeys();renderBets();
+// ══ INIT ══
+loadSettings();loadKey();renderBets();
 </script>
 </body>
 </html>
