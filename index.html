@@ -362,10 +362,42 @@ document.addEventListener('paste',function(e){
 
 // ══ BETINASIA TEXT PARSER ══
 function normHC(hc){
-  // Normalize handicap for matching — keep combined lines intact
-  return hc.toString().trim()
-    .replace(/\s+/g,'')  // remove spaces
-    .replace(/,/g,',');   // keep commas for combined lines
+  // Normalize handicap string for matching
+  // Input examples: "-0,5" | "-0.5" | "-0.5,-1.0" | "-0,5,-1,0" | "-0.5, -1.0"
+  var s = hc.toString().trim().replace(/\s+/g,''); // remove spaces
+
+  // Split on comma only when followed by - + or digit after a digit
+  // e.g. "-0.5,-1.0" -> ["-0.5", "-1.0"]
+  // but "-0,5" -> keep as one token "-0.5"
+
+  // Strategy: split on comma that is preceded by a digit and followed by - + or digit
+  var parts = [];
+  var current = '';
+  for(var i=0; i<s.length; i++){
+    var c = s[i];
+    if(c === ','){
+      // Check if this comma is a decimal separator or a list separator
+      var prevIsDigit = i>0 && /\d/.test(s[i-1]);
+      var nextIsSign = i<s.length-1 && /[\-\+\d]/.test(s[i+1]);
+      var alreadyHasDot = current.indexOf('.')!==-1;
+      if(prevIsDigit && nextIsSign && (alreadyHasDot || (i<s.length-1 && s[i+1]==='-') || (i<s.length-1 && s[i+1]==='+'))){
+        // This is a list separator
+        parts.push(current);
+        current = '';
+      } else {
+        // This is a decimal separator
+        current += '.';
+      }
+    } else {
+      current += c;
+    }
+  }
+  if(current) parts.push(current);
+
+  // Normalize each part: replace remaining commas with dots
+  parts = parts.map(function(p){ return p.replace(/,/g,'.'); });
+
+  return parts.join(',');
 }
 
 function parseBiasText(text){
@@ -515,31 +547,38 @@ async function analyseAll(){
     var minEV=getMinEV()/100,suspectThr=getSuspect()/100;
     var hiddenCount=0;
 
-    biaData.lines.forEach(function(l,idx){
+    var homeLabel=document.getElementById('homeTeam').value.trim()||'Heim';
+    var awayLabel=document.getElementById('awayTeam').value.trim()||'Ausw.';
+    var matchName=homeLabel+' vs '+awayLabel;
+
+    biaData.lines.forEach(function(l){
       var key=normHC(l.handicap);
       var b365=b365Map[key];
 
-      // Home side
+      // Only show line if BOTH Betinasia AND Bet365 have it
+      if(!b365)return;
+
       ['home','away'].forEach(function(side){
         var biaOdds=side==='home'?l.homeOdds:l.awayOdds;
-        var b365Odds=b365?b365[side]:null;
-        var sideLabel=side==='home'?
-          (document.getElementById('homeTeam').value.trim()||'Heim'):
-          (document.getElementById('awayTeam').value.trim()||'Ausw.');
-        var hcLabel=side==='home'?l.handicap:(l.handicap==0?'0':(-parseFloat(l.handicap)).toFixed(2).replace('.00','').replace(/\.?0+$/,''));
+        var b365Odds=b365[side];
+
+        // Skip if no B365 odds for this side
+        if(!b365Odds||b365Odds<=1)return;
+
+        var sideLabel=side==='home'?homeLabel:awayLabel;
 
         // Fair probability from Betinasia (remove overround)
         var total=1/l.homeOdds+1/l.awayOdds;
         var trueP=(1/biaOdds)/total;
 
-        var ev=b365Odds?evPercent(trueP,b365Odds):null;
-        var rec=(b365Odds&&bkr>0)?recStakeCalc(bkr,trueP,b365Odds,kPct,cap):null;
-        var diff=b365Odds?(b365Odds-biaOdds):null;
-        var isSuspect=ev!==null&&Math.abs(ev)>suspectThr;
-        var hasValue=ev!==null&&ev>=minEV&&!isSuspect;
+        var ev=evPercent(trueP,b365Odds);
+        var rec=bkr>0?recStakeCalc(bkr,trueP,b365Odds,kPct,cap):null;
+        var diff=b365Odds-biaOdds;
+        var isSuspect=Math.abs(ev)>suspectThr;
+        var hasValue=ev>=minEV&&!isSuspect;
 
         rows.push({
-          hc:side==='home'?l.handicap:hcLabel,
+          hc:l.handicap,
           side:sideLabel,
           biaOdds:biaOdds,
           b365Odds:b365Odds,
@@ -551,7 +590,7 @@ async function analyseAll(){
           isSuspect:isSuspect,
           isVisible:true,
           bankroll:bkr,kPct:kPct,maxCap:cap,
-          matchName:(document.getElementById('homeTeam').value.trim()||'Heim')+' vs '+(document.getElementById('awayTeam').value.trim()||'Ausw.'),
+          matchName:matchName,
           idx:rows.length
         });
       });
