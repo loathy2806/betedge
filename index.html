@@ -130,15 +130,24 @@ hr{border:none;border-top:1px solid var(--border);margin:20px 0;}
 </div>
 <div class="card">
   <div class="row" style="margin-bottom:10px;">
-    <div class="field">
-      <label>Heimteam (optional — wird automatisch erkannt)</label>
-      <input id="homeTeam" placeholder="z.B. Sturm Graz"/>
+    <div class="field" style="flex:2;">
+      <label>Spiel suchen (Teamname eingeben)</label>
+      <div style="display:flex;gap:6px;">
+        <input id="searchQuery" placeholder="z.B. Sturm oder Rapid..." style="flex:1;" onkeydown="if(event.key==='Enter')searchFixtures()"/>
+        <button class="btn btn-blue btn-sm" onclick="searchFixtures()" style="white-space:nowrap;">🔍 Suchen</button>
+      </div>
     </div>
-    <div class="field">
-      <label>Auswärtsteam (optional)</label>
-      <input id="awayTeam" placeholder="z.B. Rapid Wien"/>
+    <div class="field" style="flex:2;">
+      <label>Spiel auswählen</label>
+      <select id="fixtureSelect" onchange="onFixtureSelected()">
+        <option value="">— Zuerst suchen —</option>
+      </select>
     </div>
   </div>
+  <div id="selectedFixture" style="font-size:.7rem;color:var(--green);margin-bottom:8px;display:none;"></div>
+  <input type="hidden" id="homeTeam" value=""/>
+  <input type="hidden" id="awayTeam" value=""/>
+  <input type="hidden" id="selectedFixtureId" value=""/>
   <div class="field">
     <label>Betinasia Asian Handicap Text</label>
     <textarea id="biaText" placeholder="asian handicap&#10;-2,75&#10;STU3.067&#10;SCR1.009&#10;-0,5&#10;STU2.009&#10;SCR1.934&#10;..."></textarea>
@@ -148,7 +157,6 @@ hr{border:none;border-top:1px solid var(--border);margin:20px 0;}
 
 <div style="display:flex;gap:8px;margin-bottom:10px;">
   <button class="btn btn-green" onclick="analyseAll()" id="analyseBtn">⚡ Analysieren</button>
-  <button class="btn btn-blue btn-sm" onclick="debugFixtures()">🔍 Spiele suchen</button>
   <button class="btn btn-ghost" onclick="clearAll()">Clear</button>
 </div>
 <div id="debugBox" style="display:none;background:var(--raised);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;margin-bottom:10px;max-height:200px;overflow-y:auto;font-size:.72rem;"></div>
@@ -289,8 +297,9 @@ async function opGet(endpoint, params){
 // Search for a fixture by team names — flexible matching
 async function findFixture(homeTeam, awayTeam){
   var today = new Date();
-  var future = new Date(today.getTime() + 72*3600000);
-  var from = today.toISOString().slice(0,10);
+  var past = new Date(today.getTime() - 24*3600000);
+  var future = new Date(today.getTime() + 7*24*3600000);
+  var from = past.toISOString().slice(0,10);
   var to = future.toISOString().slice(0,10);
 
   var data = await opGet('/fixtures', {sportId:10, from:from, to:to});
@@ -446,6 +455,63 @@ function parseBiasText(text){
   return result.lines.length>0?result:null;
 }
 
+// ══ FIXTURE SEARCH ══
+var _allFixtures = [];
+
+async function searchFixtures(){
+  var query = document.getElementById('searchQuery').value.trim().toLowerCase();
+  if(!query){alert('Bitte einen Suchbegriff eingeben.');return;}
+  if(!document.getElementById('opKey').value.trim()){alert('Bitte OddsPapi API Key eintragen.');return;}
+
+  var sel = document.getElementById('fixtureSelect');
+  sel.innerHTML = '<option>Suche läuft...</option>';
+  _allFixtures = []; // Always fetch fresh
+
+  try{
+    if(!_allFixtures.length){
+      var today=new Date();
+      var past=new Date(today.getTime()-24*3600000); // 1 day back
+      var future=new Date(today.getTime()+7*24*3600000); // 7 days forward
+      var data=await opGet('/fixtures',{sportId:10,from:past.toISOString().slice(0,10),to:future.toISOString().slice(0,10)});
+      _allFixtures=Array.isArray(data)?data:[];
+    }
+
+    var results=_allFixtures.filter(function(f){
+      var p1=(f.participant1Name||'').toLowerCase();
+      var p2=(f.participant2Name||'').toLowerCase();
+      return p1.includes(query)||p2.includes(query);
+    });
+
+    sel.innerHTML='<option value="">— '+results.length+' Ergebnisse —</option>';
+    results.forEach(function(f){
+      var opt=document.createElement('option');
+      opt.value=f.fixtureId||f.id;
+      opt.textContent=f.participant1Name+' vs '+f.participant2Name+' ('+f.tournamentName+')';
+      opt.dataset.home=f.participant1Name;
+      opt.dataset.away=f.participant2Name;
+      sel.appendChild(opt);
+    });
+
+    if(results.length===0){
+      sel.innerHTML='<option>Keine Ergebnisse — anderen Begriff versuchen</option>';
+    }
+  }catch(e){
+    sel.innerHTML='<option>Fehler: '+e.message+'</option>';
+  }
+}
+
+function onFixtureSelected(){
+  var sel=document.getElementById('fixtureSelect');
+  var opt=sel.options[sel.selectedIndex];
+  if(!opt||!opt.value)return;
+  document.getElementById('homeTeam').value=opt.dataset.home||'';
+  document.getElementById('awayTeam').value=opt.dataset.away||'';
+  document.getElementById('selectedFixtureId').value=opt.value;
+  var info=document.getElementById('selectedFixture');
+  info.textContent='✓ Ausgewählt: '+opt.textContent;
+  info.style.display='block';
+}
+
 // ══ DEBUG ══
 async function debugFixtures(){
   if(!document.getElementById('opKey').value.trim()){alert('Bitte OddsPapi API Key eintragen.');return;}
@@ -454,8 +520,9 @@ async function debugFixtures(){
   box.innerHTML='<span class="spinner"></span> Suche Spiele bei OddsPapi...';
   try{
     var today=new Date();
-    var future=new Date(today.getTime()+72*3600000);
-    var from=today.toISOString().slice(0,10);
+    var past=new Date(today.getTime()-24*3600000);
+    var future=new Date(today.getTime()+7*24*3600000);
+    var from=past.toISOString().slice(0,10);
     var to=future.toISOString().slice(0,10);
     var data=await opGet('/fixtures',{sportId:10,from:from,to:to});
     if(!Array.isArray(data)||!data.length){box.innerHTML='Keine Spiele gefunden für '+from+' bis '+to;return;}
@@ -498,10 +565,28 @@ async function analyseAll(){
     var awayTeam=document.getElementById('awayTeam').value.trim()||biaData.awayTeam;
 
     setStatus('loading','<span class="spinner"></span> Suche Spiel bei OddsPapi: '+homeTeam+' vs '+awayTeam+'...');
-    var fixture=await findFixture(homeTeam,awayTeam);
+    // Use selected fixture ID if available, otherwise search by name
+    var fixture=null;
+    var selectedId=document.getElementById('selectedFixtureId').value;
+    if(selectedId){
+      // Find in cached fixtures
+      fixture=_allFixtures.find(function(f){return (f.fixtureId||f.id)==selectedId;});
+      if(!fixture){
+        // Create minimal fixture object
+        var sel=document.getElementById('fixtureSelect');
+        var opt=sel.options[sel.selectedIndex];
+        if(opt&&opt.value){
+          fixture={fixtureId:selectedId,id:selectedId,participant1Name:opt.dataset.home,participant2Name:opt.dataset.away};
+        }
+      }
+    }
 
     if(!fixture){
-      setStatus('error','Spiel nicht gefunden bei OddsPapi. Überprüfe Teamnamen (z.B. "Sturm Graz" statt "STU").');
+      fixture=await findFixture(homeTeam,awayTeam);
+    }
+
+    if(!fixture){
+      setStatus('error','Spiel nicht gefunden. Bitte nutze die Suchfunktion oben um das Spiel auszuwählen.');
       document.getElementById('analyseBtn').disabled=false;
       return;
     }
