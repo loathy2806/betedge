@@ -349,7 +349,6 @@ async function smGet(endpoint, params){
 async function fetchFixtures(dateFrom, dateTo){
   var data = await smGet('/fixtures/between/'+dateFrom+'/'+dateTo, {
     include: 'participants',
-    filters: 'fixtureHasOdds:true',
     per_page: 50
   });
   return data.data||[];
@@ -401,7 +400,7 @@ async function scanValueBets(){
     }
 
     // Filter to only fixtures with odds
-    var withOdds = fixtures.filter(function(f){return f.has_odds;});
+    var withOdds = fixtures.filter(function(f){return true;});
     setStatus('loading','<span class="spinner"></span> Found '+fixtures.length+' fixtures ('+withOdds.length+' with odds). Analysing odds...');
 
     var valueBets = [];
