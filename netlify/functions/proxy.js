@@ -8,9 +8,17 @@ exports.handler = async function(event) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Missing url parameter' }) };
   }
 
-  // Only allow Sportmonks API calls
-  if (!url.startsWith('https://api.sportmonks.com/')) {
-    return { statusCode: 403, body: JSON.stringify({ error: 'Only Sportmonks API allowed' }) };
+  const allowed = [
+    'https://api.sportmonks.com/',
+    'https://api.oddspapi.io/'
+  ];
+
+  const isAllowed = allowed.some(function(prefix) {
+    return url.startsWith(prefix);
+  });
+
+  if (!isAllowed) {
+    return { statusCode: 403, body: JSON.stringify({ error: 'URL not allowed' }) };
   }
 
   try {
