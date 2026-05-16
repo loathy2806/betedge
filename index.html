@@ -284,7 +284,7 @@ async function opGet(endpoint, params){
   return resp.json();
 }
 
-// Search for a fixture by team names
+// Search for a fixture by team names — flexible matching
 async function findFixture(homeTeam, awayTeam){
   var today = new Date();
   var future = new Date(today.getTime() + 72*3600000);
@@ -292,25 +292,45 @@ async function findFixture(homeTeam, awayTeam){
   var to = future.toISOString().slice(0,10);
 
   var data = await opGet('/fixtures', {sportId:10, from:from, to:to});
-  if(!Array.isArray(data))return null;
+  if(!Array.isArray(data)||!data.length)return null;
 
-  // Try to find match by team name similarity
-  var ht = homeTeam.toLowerCase();
-  var at = awayTeam.toLowerCase();
+  var ht = homeTeam.toLowerCase().replace(/^(sk|fc|ac|as|rc|cf|cd|us|ss|sc|rb|bv|vfb|vfl|tsg|tsv|fsv|sv|rv|1\.fc|1\.fk|red bull|borussia|bayer|hannover|hamburger|werder|hertha|fortuna|arminia|eintracht|schalke|kaisers|koeln|köln|leverkusen|münchen|munich|dortmund|berlin|bremen|mainz|freiburg|augsburg|wolfsburg|hoffenheim|gladbach|stuttgart|frankfurt|hamburg|graz|wien|vienna|rapid|sturm|austria|salzburg|lask|wac|altach|ried|hartberg|tirol|wolfsberg|linz)/i, '').trim();
+  var at = awayTeam.toLowerCase().replace(/^(sk|fc|ac|as|rc|cf|cd|us|ss|sc|rb|bv|vfb|vfl|tsg|tsv|fsv|sv|rv|1\.fc|1\.fk|red bull|borussia|bayer|hannover|hamburger|werder|hertha|fortuna|arminia|eintracht|schalke|kaisers|koeln|köln|leverkusen|münchen|munich|dortmund|berlin|bremen|mainz|freiburg|augsburg|wolfsburg|hoffenheim|gladbach|stuttgart|frankfurt|hamburg|graz|wien|vienna|rapid|sturm|austria|salzburg|lask|wac|altach|ried|hartberg|tirol|wolfsberg|linz)/i, '').trim();
+
+  // Also keep original for matching
+  var htOrig = homeTeam.toLowerCase();
+  var atOrig = awayTeam.toLowerCase();
+
+  function similarity(a, b){
+    if(!a||!b)return 0;
+    a=a.toLowerCase();b=b.toLowerCase();
+    if(a===b)return 10;
+    if(a.includes(b)||b.includes(a))return 8;
+    // Check word overlap
+    var wa=a.split(/\s+/),wb=b.split(/\s+/);
+    var common=wa.filter(function(w){return w.length>2&&wb.some(function(x){return x.includes(w)||w.includes(x);});});
+    if(common.length>0)return common.length*3;
+    // Check first 4 chars
+    if(a.slice(0,4)===b.slice(0,4))return 4;
+    if(a.slice(0,3)===b.slice(0,3))return 3;
+    return 0;
+  }
 
   var best = null, bestScore = 0;
   data.forEach(function(f){
     var p1 = (f.participant1Name||'').toLowerCase();
     var p2 = (f.participant2Name||'').toLowerCase();
-    var score = 0;
-    if(p1.includes(ht)||ht.includes(p1.slice(0,4)))score+=2;
-    if(p2.includes(at)||at.includes(p2.slice(0,4)))score+=2;
-    if(p1.includes(ht.slice(0,4)))score+=1;
-    if(p2.includes(at.slice(0,4)))score+=1;
+    var s1h = Math.max(similarity(p1,htOrig), similarity(p1,ht));
+    var s2a = Math.max(similarity(p2,atOrig), similarity(p2,at));
+    var score = s1h + s2a;
     if(score>bestScore){bestScore=score;best=f;}
   });
 
-  return bestScore>=2?best:null;
+  // Need at least some match on both teams
+  if(bestScore<3)return null;
+
+  console.log('Found fixture:', best.participant1Name, 'vs', best.participant2Name, 'score:', bestScore);
+  return best;
 }
 
 // Get Asian Handicap odds for a fixture from reference bookmaker
