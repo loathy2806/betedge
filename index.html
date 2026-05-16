@@ -188,7 +188,7 @@ hr{border:none;border-top:1px solid var(--border);margin:20px 0;}
             <th>EV%</th>
             <th>Rec. Stake</th>
             <th>Signal</th>
-            <th>Links</th>
+            <th>Einsatz / Gewinn</th>
             <th>Save</th>
           </tr>
         </thead>
@@ -667,6 +667,44 @@ function recalcRow(idx,newVal){
   document.getElementById('b365e_'+idx).style.borderColor='var(--green)';
 }
 
+// ══ RECALC BIA (when Betinasia odds edited) ══
+function recalcBia(idx, newVal){
+  var r=_lastRows[idx];if(!r)return;
+  var newBia=parseFloat(newVal);
+  if(!newBia||newBia<=1||newBia>200)return;
+  r.biaOdds=newBia;
+  var ev=evPercent(r.trueP,newBia);
+  var bkr=r.bankroll||gv('bankroll');
+  var rec=bkr>0?recStakeCalc(bkr,r.trueP,newBia,r.kPct||gv('kellyPct'),r.maxCap||gv('maxCap')):null;
+  var diff=newBia-r.b365OddsEdit;
+  var suspectThr=gv('suspectThr')/100;
+  var isSuspect=Math.abs(ev)>suspectThr;
+  var hasValue=ev>=gv('minEV')/100&&!isSuspect;
+  r.ev=ev;r.rec=rec;r.diff=diff;r.hasValue=hasValue;r.isSuspect=isSuspect;
+  var diffStr=diff>0?'<span style="color:var(--green)">+'+diff.toFixed(3)+'</span>':'<span style="color:var(--red)">'+diff.toFixed(3)+'</span>';
+  document.getElementById('diff_'+idx).innerHTML=diffStr;
+  var evCol=isSuspect?'color:var(--red)':ev>0?'color:var(--green)':'color:var(--red)';
+  document.getElementById('ev_'+idx).innerHTML='<span style="'+evCol+';font-weight:700">'+ps(ev)+'</span>';
+  document.getElementById('rec_'+idx).textContent=rec>0?eur(rec):'--';
+  var sig=isSuspect?'<span class="sbadge">⚠ VERIFY</span>':hasValue?'<span class="vbadge">BET</span>':'<span class="nbadge">--</span>';
+  document.getElementById('sig_'+idx).innerHTML=sig;
+  document.getElementById('row_'+idx).className=isSuspect?'srow':hasValue?'vrow':'';
+  // Update win display
+  updateWin(idx);
+}
+
+// ══ UPDATE WIN DISPLAY ══
+function updateWin(idx){
+  var r=_lastRows[idx];if(!r)return;
+  var stakeEl=document.getElementById('stake_'+idx);
+  var winEl=document.getElementById('win_'+idx);
+  if(!stakeEl||!winEl)return;
+  var stake=parseFloat(stakeEl.value);
+  if(!stake||stake<=0){winEl.textContent='= --';return;}
+  var profit=stake*(r.biaOdds-1);
+  winEl.textContent='= +EUR '+profit.toFixed(2);
+}
+
 // ══ SAVE ROW ══
 function saveRow(idx){
   var r=_lastRows[idx];if(!r)return;
@@ -683,7 +721,13 @@ function saveRow(idx){
     savedAt:new Date().toISOString()
   });
   saveBets(bets);renderBets();
-  alert('Gespeichert!\n'+r.side+' ('+r.hc+')\nBetinasia: '+r.biaOdds.toFixed(3)+' | EV: '+ps(r.ev)+'\nBei Betinasia wetten!');
+  var stakeEl=document.getElementById('stake_'+idx);
+  var stakeVal=stakeEl?parseFloat(stakeEl.value)||0:0;
+  if(stakeVal>0){
+    bets[0].stake=stakeVal;
+    saveBets(bets);renderBets();
+  }
+  alert('Gespeichert!\n'+r.side+' ('+r.hc+')\nBetinasia: '+r.biaOdds.toFixed(3)+' | EV: '+ps(r.ev)+'\n\n➡ Bei BETINASIA wetten!');
 }
 
 function setStatus(type,msg){
