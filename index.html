@@ -396,7 +396,7 @@ async function extractB365Odds(b64,imgType,homeAbbr,awayAbbr){
   if(!key)throw new Error('Kein API Key gesetzt');
 
   // Build Bet365 prompt — Bet365 First reads, then we pass known handicaps
-  var prompt='This is a Bet365 Alternative Asian Handicap screenshot.\n\nExtract ALL lines visible — including combined lines like "-0.5, -1.0" and simple lines like "-0.5".\n\nLayout: TWO columns side by side.\n- LEFT column = home team ('+homeAbbr+')\n- RIGHT column = away team ('+awayAbbr+')\n\nFor EACH row extract:\n1. The handicap label EXACTLY as shown (e.g. "-0.5, -1.0" or "-0.5" or "0.0")\n2. The odds number next to it\n\nPair each home row with the away row on the same line.\n\nReturn ONLY this JSON:\n{"lines":[{"handicap":"-1.5","homeOdds":4.100,"awayOdds":1.195},{"handicap":"-0.5","homeOdds":2.150,"awayOdds":1.645},{"handicap":"0.0","homeOdds":1.595,"awayOdds":2.250},{"handicap":"-0.5, -1.0","homeOdds":1.295,"awayOdds":3.300}]}\n\nInclude ALL lines. If nothing found: {"error":"not found"}';
+  var prompt='This is a Bet365 Asian Handicap screenshot with TWO columns.\n\nCRITICAL: The LEFT column shows the HOME team handicap+odds. The RIGHT column shows the AWAY team handicap+odds. They are on the SAME ROW but show DIFFERENT handicaps (opposite of each other).\n\nExample row:\nLEFT: "-1.5  3.700"  |  RIGHT: "+1.5  1.230"\nThis means: homeHandicap="-1.5", homeOdds=3.700, awayHandicap="+1.5", awayOdds=1.230\n\nAnother example:\nLEFT: "+0.5  1.270"  |  RIGHT: "-0.5  3.450"\nThis means: homeHandicap="+0.5", homeOdds=1.270, awayHandicap="-0.5", awayOdds=3.450\n\nExtract EVERY row exactly as shown. Include combined lines like "-1.5, -2.0".\n\nReturn ONLY this JSON — each entry has homeHandicap, homeOdds, awayHandicap, awayOdds:\n{"lines":[{"homeHandicap":"-2.0","homeOdds":7.000,"awayHandicap":"+2.0","awayOdds":1.080},{"homeHandicap":"-1.5","homeOdds":3.700,"awayHandicap":"+1.5","awayOdds":1.230},{"homeHandicap":"-1.0","homeOdds":2.850,"awayHandicap":"+1.0","awayOdds":1.370},{"homeHandicap":"0.0","homeOdds":1.445,"awayHandicap":"0.0","awayOdds":2.600},{"homeHandicap":"+0.5","homeOdds":1.270,"awayHandicap":"-0.5","awayOdds":3.450}]}\n\nIf nothing found: {"error":"not found"}';
 
   var resp=await fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
@@ -480,10 +480,26 @@ async function analyseAll(){
     b365El.style.display='block';
 
     // Step 3: Build Bet365 lookup map
+    // New format: each line has homeHandicap+homeOdds and awayHandicap+awayOdds separately
     var b365Map={};
     b365Data.lines.forEach(function(l){
-      if(l.homeOdds&&l.awayOdds&&l.homeOdds>1&&l.awayOdds>1){
-        b365Map[normHC(l.handicap)]={home:l.homeOdds,away:l.awayOdds};
+      // New format with separate home/away handicaps
+      if(l.homeHandicap&&l.homeOdds&&l.homeOdds>1){
+        var hk=normHC(l.homeHandicap);
+        if(!b365Map[hk])b365Map[hk]={};
+        b365Map[hk].home=l.homeOdds;
+      }
+      if(l.awayHandicap&&l.awayOdds&&l.awayOdds>1){
+        var ak=normHC(l.awayHandicap);
+        if(!b365Map[ak])b365Map[ak]={};
+        b365Map[ak].away=l.awayOdds;
+      }
+      // Also support old format
+      if(l.handicap&&l.homeOdds&&l.awayOdds){
+        var k=normHC(l.handicap);
+        if(!b365Map[k])b365Map[k]={};
+        if(l.homeOdds>1)b365Map[k].home=l.homeOdds;
+        if(l.awayOdds>1)b365Map[k].away=l.awayOdds;
       }
     });
 
@@ -496,16 +512,32 @@ async function analyseAll(){
 
     biaData.lines.forEach(function(l){
       var key=normHC(l.handicap);
-      var b365=b365Map[key];
-      if(!b365)return; // No matching Bet365 line — skip
 
       ['home','away'].forEach(function(side){
         var biaOdds=side==='home'?l.homeOdds:l.awayOdds;
-        var b365Odds=b365[side];
-        if(!biaOdds||biaOdds<=1||!b365Odds||b365Odds<=1)return;
+        if(!biaOdds||biaOdds<=1)return;
+
+        // For home side: look up home handicap in b365Map
+        // For away side: the away handicap is the OPPOSITE of home handicap
+        // e.g. Betinasia -1.5 home → Bet365 -1.5 home
+        //      Betinasia -1.5 away → Bet365 +1.5 away (opposite)
+        var b365Key=key; // same handicap, same side lookup
+        var b365Entry=b365Map[b365Key];
+        if(!b365Entry)return;
+
+        var b365Odds=b365Entry[side];
+        if(!b365Odds||b365Odds<=1)return;
+
+        // For fair probability, find the opposite side in b365Map
+        // e.g. for home -1.5 we need away +1.5 to calculate overround
+        var oppositeKey=key.charAt(0)==='-'?key.replace('-','+'):key.replace('+','-');
+        if(key==='0')oppositeKey='0';
+        var oppositeEntry=b365Map[oppositeKey]||b365Map[key];
+        var homeB365=side==='home'?b365Odds:(oppositeEntry?oppositeEntry.home||b365Odds:b365Odds);
+        var awayB365=side==='away'?b365Odds:(oppositeEntry?oppositeEntry.away||b365Odds:b365Odds);
 
         // Fair probability: remove Bet365 overround
-        var fp=fairProbFromB365(b365.home,b365.away);
+        var fp=fairProbFromB365(homeB365,awayB365);
         var trueP=side==='home'?fp.home:fp.away;
 
         var ev=evPercent(trueP,biaOdds);
