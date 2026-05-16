@@ -362,7 +362,10 @@ document.addEventListener('paste',function(e){
 
 // ══ BETINASIA TEXT PARSER ══
 function normHC(hc){
-  return hc.toString().replace(',','.').replace('+','');
+  // Normalize handicap for matching — keep combined lines intact
+  return hc.toString().trim()
+    .replace(/\s+/g,'')  // remove spaces
+    .replace(/,/g,',');   // keep commas for combined lines
 }
 
 function parseBiasText(text){
@@ -501,8 +504,9 @@ async function analyseAll(){
     // Build lookup map for Bet365
     var b365Map={};
     b365Data.lines.forEach(function(l){
+      // Store with multiple key variants for flexible matching
       var key=normHC(l.handicap);
-      b365Map[key]={home:l.homeOdds,away:l.awayOdds};
+      b365Map[key]={home:l.homeOdds,away:l.awayOdds,raw:l.handicap};
     });
 
     // Build rows — match Betinasia lines with Bet365
@@ -534,8 +538,6 @@ async function analyseAll(){
         var isSuspect=ev!==null&&Math.abs(ev)>suspectThr;
         var hasValue=ev!==null&&ev>=minEV&&!isSuspect;
 
-        if(!hasValue&&!isSuspect)hiddenCount++;
-
         rows.push({
           hc:side==='home'?l.handicap:hcLabel,
           side:sideLabel,
@@ -547,7 +549,7 @@ async function analyseAll(){
           diff:diff,
           hasValue:hasValue,
           isSuspect:isSuspect,
-          isVisible:hasValue||isSuspect,
+          isVisible:true,
           bankroll:bkr,kPct:kPct,maxCap:cap,
           matchName:(document.getElementById('homeTeam').value.trim()||'Heim')+' vs '+(document.getElementById('awayTeam').value.trim()||'Ausw.'),
           idx:rows.length
@@ -592,9 +594,9 @@ function renderResults(rows,hiddenCount,biaData,b365Data){
     var diffStr=r.diff!==null?(r.diff>0?'<span style="color:var(--green)">+'+r.diff.toFixed(3)+'</span>':'<span style="color:var(--red)">'+r.diff.toFixed(3)+'</span>'):'<span style="color:var(--muted)">--</span>';
     var signalHtml=r.isSuspect?'<span class="sbadge">⚠ VERIFY</span>':r.hasValue?'<span class="vbadge">BET</span>'+(isBest?'<span class="bbadge">BEST</span>':''):'<span class="nbadge">--</span>';
 
-    // Editable B365 odds
+    // Editable B365 odds — show n.e. if no match found
     var b365Disp=r.b365Odds?r.b365Odds.toFixed(3):'';
-    var b365Input='<input type="number" id="b365_'+idx+'" value="'+b365Disp+'" placeholder="B365 Quote" step="0.01" min="1.01" style="width:80px;padding:3px 6px;font-size:.72rem;border-color:'+(r.b365Odds?'var(--border2)':'var(--amber)')+'" onchange="recalcRow('+idx+',this.value)" title="Editierbar wenn Quote veraltet"/>';
+    var b365Input='<input type="number" id="b365_'+idx+'" value="'+b365Disp+'" placeholder="n.e." step="0.01" min="1.01" style="width:80px;padding:3px 6px;font-size:.72rem;border-color:'+(r.b365Odds?'var(--border2)':'var(--muted)')+'" onchange="recalcRow('+idx+',this.value)" title="n.e. = nicht existent bei Bet365. Manuell eingeben falls vorhanden."/>';
 
     tbody.innerHTML+='<tr id="row_'+idx+'" class="'+(r.isSuspect?'srow':r.hasValue?'vrow':'')+'"'+(r.isVisible?'':' style="display:none" data-hidden="1"')+'>'
       +'<td style="font-weight:600">'+r.hc+'</td>'
@@ -613,13 +615,12 @@ function renderResults(rows,hiddenCount,biaData,b365Data){
       +'</tr>';
   });
 
-  // Toggle button
+  // Show value bets count info
   var hcEl=document.getElementById('hiddenCount');
   var tbEl=document.getElementById('toggleBtn');
-  var realHidden=document.querySelectorAll('#resultsBody tr[data-hidden="1"]').length;
-  if(hcEl)hcEl.textContent=realHidden>0?realHidden+' Linien ausgeblendet':'Alle Linien sichtbar';
-  if(tbEl)tbEl.textContent=realHidden>0?'Alle zeigen':'Nur Value zeigen';
-  window._showingAll=false;
+  if(hcEl)hcEl.textContent=valueBets.length+' Value Bets | '+rows.length+' Linien total';
+  if(tbEl)tbEl.style.display='none';
+  window._showingAll=true;
 
   document.getElementById('resultsSection').style.display='block';
   setStatus('success','✓ Analyse abgeschlossen — '+valueBets.length+' Value Bets gefunden.');
