@@ -131,16 +131,7 @@ hr{border:none;border-top:1px solid var(--border);margin:24px 0;}
     <span id="keyStatus" class="key-status missing">Not set</span>
   </div>
   <div class="hint-text" style="margin-top:6px;">Saved only in your browser. Never shared. Go to Sportmonks → Tokens to find your token.</div>
-  <div style="margin-top:12px;">
-    <div class="key-row">
-      <div class="field">
-        <label>Anthropic API Key (for proxy)</label>
-        <input type="password" id="claudeKey" placeholder="sk-ant-..." oninput="saveClaudeKey()"/>
-      </div>
-      <span id="claudeKeyStatus" class="key-status missing">Not set</span>
-    </div>
-    <div class="hint-text" style="margin-top:4px;">Used as proxy to fetch Sportmonks data. Find at console.anthropic.com → API Keys.</div>
-  </div>
+
 </div>
 
 <!-- SETTINGS -->
@@ -328,21 +319,7 @@ function loadKey(){
   var k=localStorage.getItem('be_smkey');
   if(k){document.getElementById('apiKey').value=k;updateKeyStatus();}
 }
-function saveClaudeKey(){
-  var k=document.getElementById('claudeKey').value.trim();
-  if(k){localStorage.setItem('be_claudekey',k);updateClaudeKeyStatus();}
-}
-function loadClaudeKey(){
-  var k=localStorage.getItem('be_claudekey');
-  if(k){document.getElementById('claudeKey').value=k;updateClaudeKeyStatus();}
-}
-function getClaudeKey(){return document.getElementById('claudeKey').value.trim();}
-function updateClaudeKeyStatus(){
-  var k=document.getElementById('claudeKey').value.trim();
-  var el=document.getElementById('claudeKeyStatus');
-  if(k&&k.length>10){el.className='key-status ok';el.textContent='✓ Key set';}
-  else{el.className='key-status missing';el.textContent='Not set';}
-}
+
 function updateKeyStatus(){
   var k=document.getElementById('apiKey').value.trim();
   var el=document.getElementById('keyStatus');
@@ -352,77 +329,20 @@ function updateKeyStatus(){
 function getKey(){return document.getElementById('apiKey').value.trim();}
 
 // ══════════════════════════════════════
-//  SPORTMONKS API (via Claude proxy)
+//  SPORTMONKS API (via Netlify proxy)
 // ══════════════════════════════════════
 async function smGet(endpoint, params){
   var smKey = getKey();
-  var claudeKey = getClaudeKey();
   if(!smKey)throw new Error('No Sportmonks API key set');
-  if(!claudeKey)throw new Error('No Anthropic API key set');
-
-  var url = SM_BASE + endpoint + '?api_token=' + encodeURIComponent(smKey);
-  if(params)Object.keys(params).forEach(function(k){url+='&'+k+'='+encodeURIComponent(params[k]);});
-
-  // Use Claude API as proxy with web_fetch tool
-  var prompt = 'Fetch this URL using the fetch tool and return ONLY the complete raw JSON body. No explanation, no markdown, no truncation. Just the JSON object:\n' + url;
-
-  var resp = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': claudeKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-5',
-      max_tokens: 16000,
-      system: 'You are a JSON proxy. When given a URL, fetch it and return ONLY the raw JSON response body. Never add explanation, markdown, or commentary. Output must be valid JSON only.',
-      tools: [{
-        type: 'web_search_20250305',
-        name: 'web_search'
-      }],
-      messages: [{
-        role: 'user',
-        content: 'Fetch this URL and return ONLY the JSON: ' + url
-      }]
-    })
-  });
-
+  var smUrl = SM_BASE + endpoint + '?api_token=' + encodeURIComponent(smKey);
+  if(params)Object.keys(params).forEach(function(k){smUrl+='&'+k+'='+encodeURIComponent(params[k]);});
+  var proxyUrl = '/.netlify/functions/proxy?url=' + encodeURIComponent(smUrl);
+  var resp = await fetch(proxyUrl);
   if(!resp.ok){
-    var err = await resp.json().catch(function(){return {};});
-    throw new Error(err.error&&err.error.message ? err.error.message : 'Claude API error '+resp.status);
+    var e = await resp.json().catch(function(){return{};});
+    throw new Error(e.error||('Proxy error '+resp.status));
   }
-
-  var claudeData = await resp.json();
-
-  // Try to find JSON in any content block
-  var text = '';
-  var toolResults = [];
-  if(claudeData.content){
-    claudeData.content.forEach(function(block){
-      if(block.type==='text') text += block.text;
-      if(block.type==='tool_result' && block.content){
-        block.content.forEach(function(c){ if(c.type==='text') toolResults.push(c.text); });
-      }
-    });
-  }
-
-  // Try tool results first, then text
-  var sources = toolResults.concat([text]);
-  for(var si=0; si<sources.length; si++){
-    var s = sources[si].trim();
-    if(!s) continue;
-    // Strip markdown
-    s = s.replace(/^```json\s*/m,'').replace(/```\s*$/m,'').replace(/^```\s*/m,'').trim();
-    // Try direct parse
-    try{ return JSON.parse(s); }catch(e){}
-    // Try extract JSON object
-    var m = s.match(/\{[\s\S]+\}/);
-    if(m){ try{ return JSON.parse(m[0]); }catch(e){} }
-  }
-
-  throw new Error('Could not parse Sportmonks response. Try again.');
+  return resp.json();
 }
 
 // Fetch fixtures between two dates
