@@ -521,27 +521,59 @@ async function analyseAll(){
         var biaOdds=side==='home'?l.homeOdds:l.awayOdds;
         if(!biaOdds||biaOdds<=1)return;
 
-        // For home side: look up home handicap in b365Map
-        // For away side: the away handicap is the OPPOSITE of home handicap
-        // e.g. Betinasia -1.5 home → Bet365 -1.5 home
-        //      Betinasia -1.5 away → Bet365 +1.5 away (opposite)
-        var b365Key=key; // same handicap, same side lookup
+        // KEY FIX:
+        // home side: Betinasia -1.5 home → Bet365 -1.5 home column ✅
+        // away side: Betinasia -1.5 away → Bet365 +1.5 away column
+        //   (because Betinasia away odds are for the OPPOSITE handicap direction)
+        var b365Key, b365Side;
+        if(side==='home'){
+          b365Key=key;
+          b365Side='home';
+        } else {
+          // Flip the handicap sign for away side
+          if(key==='0'){
+            b365Key='0';
+          } else if(key.charAt(0)==='-'){
+            b365Key=key.replace('-','+');
+          } else {
+            b365Key=key.replace('+','-');
+            if(b365Key.charAt(0)!=='-')b365Key='-'+b365Key;
+          }
+          b365Side='away';
+        }
+
         var b365Entry=b365Map[b365Key];
         if(!b365Entry)return;
 
-        var b365Odds=b365Entry[side];
+        var b365Odds=b365Entry[b365Side];
         if(!b365Odds||b365Odds<=1)return;
 
-        // For fair probability, find the opposite side in b365Map
-        // e.g. for home -1.5 we need away +1.5 to calculate overround
-        var oppositeKey=key.charAt(0)==='-'?key.replace('-','+'):key.replace('+','-');
-        if(key==='0')oppositeKey='0';
-        var oppositeEntry=b365Map[oppositeKey]||b365Map[key];
-        var homeB365=side==='home'?b365Odds:(oppositeEntry?oppositeEntry.home||b365Odds:b365Odds);
-        var awayB365=side==='away'?b365Odds:(oppositeEntry?oppositeEntry.away||b365Odds:b365Odds);
+        // For fair probability we need both sides of the Bet365 line
+        // home side: use b365Key home+away
+        // away side: use flipped b365Key home+away (which is the original key)
+        var b365HomeOdds, b365AwayOdds;
+        if(side==='home'){
+          b365HomeOdds=b365Entry.home;
+          // Find away odds from flipped key
+          var flippedKey=key.charAt(0)==='-'?key.replace('-','+'):key.replace('+','-');
+          if(key==='0')flippedKey='0';
+          var flippedEntry=b365Map[flippedKey];
+          b365AwayOdds=flippedEntry?flippedEntry.away:b365Entry.away||b365Odds;
+        } else {
+          b365AwayOdds=b365Entry.away;
+          // Find home odds from original key
+          var origEntry=b365Map[key];
+          b365HomeOdds=origEntry?origEntry.home:b365Entry.home||b365Odds;
+        }
+
+        if(!b365HomeOdds||!b365AwayOdds||b365HomeOdds<=1||b365AwayOdds<=1){
+          // Fallback: use same entry for both
+          b365HomeOdds=b365HomeOdds||b365Odds;
+          b365AwayOdds=b365AwayOdds||b365Odds;
+        }
 
         // Fair probability: remove Bet365 overround
-        var fp=fairProbFromB365(homeB365,awayB365);
+        var fp=fairProbFromB365(b365HomeOdds,b365AwayOdds);
         var trueP=side==='home'?fp.home:fp.away;
 
         var ev=evPercent(trueP,biaOdds);
