@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>BetEdge — OddsPapi Version</title>
+<style>
+:root{
+  --bg:#0a0d12;--surface:#111520;--raised:#181f2e;--border:#1e2a3d;--border2:#273550;
+  --text:#cfd8ec;--muted:#4a5a78;--faint:#1a2235;
+  --green:#00d98b;--green-dim:rgba(0,217,139,.10);
+  --red:#ff3d5a;--red-dim:rgba(255,61,90,.10);
+  --amber:#ffaa33;--amber-dim:rgba(255,170,51,.10);
+  --blue:#3d9eff;--blue-dim:rgba(61,158,255,.10);
+  --mono:'Consolas','Courier New',monospace;
+  --sans:'Segoe UI','Helvetica Neue',Arial,sans-serif;
+  --r:8px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:13px;line-height:1.6;min-height:100vh;padding:20px 16px 60px;}
+header{max-width:1100px;margin:0 auto 20px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--border);padding-bottom:14px;}
+header h1{font-family:var(--sans);font-size:1.4rem;font-weight:700;color:var(--green);}
+header span{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;}
+.wrap{max-width:1100px;margin:0 auto;}
+.stitle{font-size:.65rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;margin-top:20px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:10px;}
+.row{display:flex;gap:10px;flex-wrap:wrap;}
+.field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:120px;}
+label{font-size:.63rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);}
+.hint{font-size:.63rem;color:var(--muted);font-style:italic;margin-top:2px;}
+input,select{background:var(--raised);border:1px solid var(--border2);border-radius:4px;color:var(--text);font-family:var(--mono);font-size:.82rem;padding:7px 9px;width:100%;transition:border-color .15s;}
+input:focus,select:focus{outline:none;border-color:var(--green);}
+input::placeholder{color:var(--muted);}
+textarea{background:var(--raised);border:1px solid var(--border2);border-radius:4px;color:var(--text);font-family:var(--mono);font-size:.75rem;padding:7px 9px;width:100%;resize:vertical;min-height:150px;line-height:1.5;}
+textarea:focus{outline:none;border-color:var(--green);}
+textarea::placeholder{color:var(--muted);}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:4px;font-family:var(--mono);font-size:.78rem;font-weight:600;cursor:pointer;border:1px solid transparent;transition:all .15s;white-space:nowrap;}
+.btn-green{background:var(--green);color:#0a0d12;}
+.btn-green:hover{background:#33ffb0;}
+.btn-green:disabled{opacity:.5;cursor:not-allowed;}
+.btn-ghost{background:transparent;color:var(--muted);border-color:var(--border2);}
+.btn-ghost:hover{color:var(--text);border-color:var(--text);}
+.btn-red{background:transparent;color:var(--red);border-color:var(--red);}
+.btn-blue{background:transparent;color:var(--blue);border-color:var(--blue);}
+.btn-amber{background:transparent;color:var(--amber);border-color:var(--amber);}
+.btn-sm{padding:3px 9px;font-size:.68rem;}
+.kstat{font-size:.68rem;padding:4px 9px;border-radius:3px;white-space:nowrap;}
+.kstat.ok{background:var(--green-dim);color:var(--green);}
+.kstat.miss{background:var(--amber-dim);color:var(--amber);}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(61,158,255,.3);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:4px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.sbox{border-radius:var(--r);padding:10px 14px;font-size:.78rem;margin-top:8px;display:none;}
+.sbox.loading{background:var(--blue-dim);border:1px solid rgba(61,158,255,.3);color:var(--blue);}
+.sbox.error{background:var(--red-dim);border:1px solid rgba(255,61,90,.3);color:var(--red);}
+.sbox.success{background:var(--green-dim);border:1px solid rgba(0,217,139,.3);color:var(--green);}
+.warn{background:var(--amber-dim);border:1px solid rgba(255,170,51,.3);border-left:3px solid var(--amber);border-radius:4px;padding:8px 12px;font-size:.72rem;color:var(--amber);margin-top:8px;line-height:1.5;}
+.info{background:var(--blue-dim);border:1px solid rgba(61,158,255,.25);border-left:3px solid var(--blue);border-radius:4px;padding:9px 13px;font-size:.72rem;color:var(--blue);line-height:1.6;margin-bottom:10px;}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:14px;}
+.stat-box{background:var(--raised);border:1px solid var(--border);border-radius:4px;padding:10px 12px;}
+.stat-box .sl{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:3px;}
+.stat-box .sv{font-size:1.05rem;font-weight:600;}
+.tbl-wrap{overflow-x:auto;}
+table.rtbl{width:100%;border-collapse:collapse;font-size:.73rem;}
+table.rtbl th{text-align:left;padding:6px 10px;background:var(--raised);color:var(--muted);font-size:.6rem;text-transform:uppercase;letter-spacing:.09em;border-bottom:1px solid var(--border);white-space:nowrap;}
+table.rtbl td{padding:7px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+table.rtbl tr:last-child td{border-bottom:none;}
+table.rtbl tr.vrow td{background:var(--green-dim);}
+table.rtbl tr.srow td{background:var(--red-dim);}
+.vbadge{display:inline-block;background:var(--green-dim);color:var(--green);border:1px solid rgba(0,217,139,.3);font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:3px;}
+.sbadge{display:inline-block;background:var(--red-dim);color:var(--red);border:1px solid rgba(255,61,90,.3);font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:3px;}
+.nbadge{display:inline-block;color:var(--muted);font-size:.65rem;padding:2px 7px;}
+.bbadge{display:inline-block;background:var(--green);color:#0a0d12;font-size:.6rem;font-weight:700;padding:2px 5px;border-radius:3px;margin-left:4px;}
+.fix-list{max-height:300px;overflow-y:auto;background:var(--raised);border:1px solid var(--border);border-radius:4px;margin-top:8px;}
+.fix-item{padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:.75rem;transition:background .1s;}
+.fix-item:last-child{border-bottom:none;}
+.fix-item:hover{background:var(--faint);}
+.fix-item.selected{background:var(--green-dim);color:var(--green);}
+.fix-meta{font-size:.65rem;color:var(--muted);margin-top:2px;}
+.tag{display:inline-block;background:var(--faint);border:1px solid var(--border);border-radius:3px;padding:1px 6px;font-size:.63rem;color:var(--muted);margin:1px;}
+table.stbl{width:100%;border-collapse:collapse;font-size:.72rem;min-width:700px;}
+table.stbl th{text-align:left;padding:7px 9px;background:var(--raised);color:var(--muted);font-size:.6rem;text-transform:uppercase;letter-spacing:.09em;border-bottom:1px solid var(--border);white-space:nowrap;}
+table.stbl td{padding:8px 9px;border-bottom:1px solid var(--border);vertical-align:middle;}
+table.stbl tr:last-child td{border-bottom:none;}
+.b-pending{background:var(--amber-dim);color:var(--amber);}
+.b-win{background:var(--green-dim);color:var(--green);}
+.b-loss{background:var(--red-dim);color:var(--red);}
+.b-void{background:var(--faint);color:var(--muted);}
+.b-half_win{background:var(--blue-dim);color:var(--blue);}
+.b-half_loss{background:var(--red-dim);color:var(--amber);}
+.sum-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.sum-box{background:var(--raised);border:1px solid var(--border);border-radius:4px;padding:8px 14px;min-width:100px;}
+.sum-box .sl{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:2px;}
+.sum-box .sv{font-size:1rem;font-weight:600;}
+.empty{text-align:center;padding:28px;color:var(--muted);font-size:.75rem;}
+hr{border:none;border-top:1px solid var(--border);margin:20px 0;}
+</style>
+</head>
+<body>
+<header>
+  <h1>BetEdge <span style="font-size:.7rem;color:var(--amber);margin-left:4px;">OddsPapi</span></h1>
+  <span>Betinasia vs Betfair/Singbet · Asian Handicap · Value Finder</span>
+</header>
+<div class="wrap">
+
+<!-- API KEYS -->
+<div class="stitle">API Keys</div>
+<div class="card">
+  <div class="row" style="margin-bottom:10px;">
+    <div class="field">
+      <label>OddsPapi API Key</label>
+      <input type="password" id="opKey" placeholder="Dein OddsPapi Key..." oninput="saveKeys()"/>
+    </div>
+    <span id="opStatus" class="kstat miss">Not set</span>
+  </div>
+  <div class="hint">Gratis auf oddspapi.io — 500 Credits/Monat. Wird nur in deinem Browser gespeichert.</div>
+</div>
+
+<!-- SETTINGS -->
+<div class="stitle">Settings</div>
+<div class="card">
+  <div class="row">
+    <div class="field"><label>Bankroll (EUR)</label><input id="bankroll" type="number" value="500" step="10" oninput="saveSetting('bankroll',this.value)"/></div>
+    <div class="field"><label>Kelly %</label><input id="kellyPct" type="number" value="25" min="1" max="100" step="5" oninput="saveSetting('kelly',this.value)"/></div>
+    <div class="field"><label>Max Stake %</label><input id="maxCap" type="number" value="3" min="0.5" max="20" step="0.5" oninput="saveSetting('maxcap',this.value)"/></div>
+    <div class="field"><label>Min EV %</label><input id="minEV" type="number" value="3" min="0" max="15" step="0.5" oninput="saveSetting('minev',this.value)"/></div>
+    <div class="field"><label>Suspect EV %</label><input id="suspectThr" type="number" value="25" min="5" max="50" step="1" oninput="saveSetting('suspect',this.value)"/></div>
+    <div class="field">
+      <label>Referenz</label>
+      <select id="refBook" oninput="saveSetting('refbook',this.value)">
+        <option value="bf">Betfair (bf) — empfohlen</option>
+        <option value="sing2">Singbet (sing2)</option>
+        <option value="sharp">Sharp</option>
+        <option value="pin88">Pin88</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 1: Find fixture -->
+<div class="stitle">Schritt 1 — Spiel suchen (1 Credit)</div>
+<div class="info">
+  Klick auf <strong>"Alle Spiele laden"</strong> um alle verfügbaren Spiele der nächsten 72 Stunden zu sehen. Dann wähle das Spiel das du analysieren möchtest.
+</div>
+<div class="card">
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+    <button class="btn btn-blue" onclick="loadFixtures()" id="loadBtn">📋 Alle Spiele laden (1 Credit)</button>
+    <input id="searchQuery" placeholder="Suchen... z.B. Sturm" style="flex:1;min-width:150px;" oninput="filterFixtures()"/>
+    <span id="creditInfo" style="font-size:.68rem;color:var(--muted);"></span>
+  </div>
+  <div id="fixtureList" class="fix-list" style="display:none;"></div>
+  <div id="selectedInfo" style="margin-top:8px;font-size:.72rem;color:var(--green);display:none;"></div>
+</div>
+
+<!-- STEP 2: Betinasia text -->
+<div class="stitle">Schritt 2 — Betinasia Text einfügen</div>
+<div class="card">
+  <div class="field">
+    <label>Asian Handicap Text von Betinasia</label>
+    <textarea id="biaText" placeholder="asian handicap&#10;-2,75&#10;home11.358&#10;away1.058&#10;-0,5&#10;home2.009&#10;away1.934&#10;..."></textarea>
+  </div>
+  <div id="biaExtracted" style="margin-top:6px;font-size:.68rem;color:var(--muted);display:none;"></div>
+</div>
+
+<div style="display:flex;gap:8px;margin-bottom:10px;">
+  <button class="btn btn-green" onclick="analyseAll()" id="analyseBtn">⚡ Analysieren</button>
+  <button class="btn btn-ghost" onclick="clearAll()">Clear</button>
+</div>
+<div id="statusBox" class="sbox"></div>
+
+<!-- RESULTS -->
+<div id="resultsSection" style="display:none;">
+  <div class="stitle">Value Bet Ergebnisse</div>
+  <div class="stat-grid" id="statsGrid"></div>
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div class="tbl-wrap">
+      <table class="rtbl">
+        <thead>
+          <tr>
+            <th>Handicap</th><th>Seite</th>
+            <th>Betinasia (Wetten)</th>
+            <th id="thRef">Betfair (Referenz)</th>
+            <th>Differenz</th><th>EV%</th><th>Rec. Stake</th><th>Signal</th>
+            <th>Einsatz / Gewinn</th><th>Save</th>
+          </tr>
+        </thead>
+        <tbody id="resultsBody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="warn">⚠ Immer Quoten auf Betinasia prüfen bevor du wettest. EV ist eine mathematische Schätzung.</div>
+</div>
+
+<hr/>
+
+<!-- SAVED BETS -->
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+  <div class="stitle" style="margin:0;">Gespeicherte Wetten</div>
+  <div style="display:flex;gap:6px;">
+    <button class="btn btn-ghost btn-sm" onclick="exportCSV()">⬇ CSV</button>
+    <button class="btn btn-red btn-sm" onclick="clearAllBets()">Alle löschen</button>
+  </div>
+</div>
+<div class="sum-row">
+  <div class="sum-box"><div class="sl">Total</div><div class="sv" id="sumTotal">0</div></div>
+  <div class="sum-box"><div class="sl">Settled</div><div class="sv" id="sumSettled">0</div></div>
+  <div class="sum-box"><div class="sl">Eingesetzt</div><div class="sv" id="sumStaked">EUR 0</div></div>
+  <div class="sum-box"><div class="sl">P&amp;L</div><div class="sv" id="sumPnl">EUR 0</div></div>
+  <div class="sum-box"><div class="sl">ROI</div><div class="sv" id="sumRoi">--</div></div>
+  <div class="sum-box"><div class="sl">Win Rate</div><div class="sv" id="sumWR">--</div></div>
+</div>
+<div class="card" style="padding:12px 14px;margin-bottom:10px;">
+  <canvas id="pnlChart" height="90" style="width:100%;display:none;"></canvas>
+  <div id="graphEmpty" class="empty" style="padding:14px;font-size:.7rem;">Graph erscheint nach erster gesettleter Wette.</div>
+</div>
+<div class="card" style="padding:0;overflow:hidden;">
+  <div class="tbl-wrap">
+    <table class="stbl">
+      <thead><tr><th>#</th><th>Match / Seite</th><th>HC</th><th>Referenz</th><th>Betinasia</th><th>EV%</th><th>Einsatz</th><th>Empfohlen</th><th>P&amp;L</th><th>Ergebnis</th><th>Del</th></tr></thead>
+      <tbody id="betsBody"></tbody>
+    </table>
+  </div>
+  <div id="emptyState" class="empty">Noch keine Wetten gespeichert.</div>
+</div>
+</div>
+
+<script>
+var OP_BASE='https://api.oddspapi.io/v4';
+var _fixtures=[];
+var _selectedFixture=null;
+var _lastRows=[];
+
+// ══ MATHS ══
+function evPercent(p,odds){return p*(odds-1)-(1-p);}
+function kellyFrac(p,odds){var b=odds-1;return(b*p-(1-p))/b;}
+function recStakeCalc(bkr,p,odds,kPct,maxPct){var kf=kellyFrac(p,odds);if(kf<=0)return 0;return Math.min(bkr*kf*(kPct/100),bkr*(maxPct/100));}
+function calcPnL(r,s,o){if(r==='win')return s*(o-1);if(r==='loss')return -s;if(r==='void')return 0;if(r==='half_win')return s*(o-1)/2;if(r==='half_loss')return -s/2;return null;}
+function fairProbFromSharp(homeOdds,awayOdds){var t=1/homeOdds+1/awayOdds;return{home:(1/homeOdds)/t,away:(1/awayOdds)/t};}
+function ps(v){return v!=null?(v>=0?'+':'')+(v*100).toFixed(2)+'%':'--';}
+function eur(v){return v!=null?'EUR '+v.toFixed(2):'--';}
+function gv(id){return parseFloat(document.getElementById(id).value)||0;}
+
+// ══ KEYS & SETTINGS ══
+function saveKeys(){
+  var op=document.getElementById('opKey').value.trim();
+  if(op)localStorage.setItem('be_opkey',op);
+  updateKeyStatus();
+}
+function loadKeys(){
+  var op=localStorage.getItem('be_opkey');
+  if(op)document.getElementById('opKey').value=op;
+  updateKeyStatus();
+}
+function updateKeyStatus(){
+  var op=document.getElementById('opKey').value.trim();
+  var el=document.getElementById('opStatus');
+  if(op&&op.length>10){el.className='kstat ok';el.textContent='✓ Key set';}
+  else{el.className='kstat miss';el.textContent='Not set';}
+}
+function saveSetting(k,v){localStorage.setItem('be_'+k,v);}
+function loadSettings(){
+  var m={bankroll:'be_bankroll',kellyPct:'be_kelly',maxCap:'be_maxcap',minEV:'be_minev',suspectThr:'be_suspect',refBook:'be_refbook'};
+  Object.keys(m).forEach(function(id){var v=localStorage.getItem(m[id]);if(v)document.getElementById(id).value=v;});
+}
+
+// ══ ODDSPAPI (via Netlify proxy) ══
+async function opGet(endpoint,params){
+  var key=document.getElementById('opKey').value.trim();
+  if(!key)throw new Error('Kein OddsPapi API Key');
+  var url=OP_BASE+endpoint+'?apiKey='+encodeURIComponent(key);
+  if(params)Object.keys(params).forEach(function(k){url+='&'+k+'='+encodeURIComponent(params[k]);});
+  var proxyUrl='/.netlify/functions/proxy?url='+encodeURIComponent(url);
+  var resp=await fetch(proxyUrl);
+  if(!resp.ok){var e=await resp.json().catch(function(){return{};});throw new Error(e.error||('API Fehler '+resp.status));}
+  return resp.json();
+}
+
+// ══ LOAD FIXTURES ══
+async function loadFixtures(){
+  var key=document.getElementById('opKey').value.trim();
+  if(!key){alert('Bitte OddsPapi API Key eintragen.');return;}
+
+  document.getElementById('loadBtn').disabled=true;
+  document.getElementById('creditInfo').textContent='Lädt... (1 Credit)';
+  document.getElementById('fixtureList').style.display='none';
+
+  try{
+    var today=new Date();
+    var future=new Date(today.getTime()+72*3600000);
+    var from=today.toISOString().slice(0,10);
+    var to=future.toISOString().slice(0,10);
+
+    var data=await opGet('/fixtures',{sportId:10,from:from,to:to});
+
+    if(!Array.isArray(data)||!data.length){
+      document.getElementById('creditInfo').textContent='Keine Spiele gefunden.';
+      document.getElementById('loadBtn').disabled=false;
+      return;
+    }
+
+    _fixtures=data;
+    document.getElementById('creditInfo').textContent=data.length+' Spiele geladen ✓';
+    renderFixtures(data);
+
+  }catch(e){
+    document.getElementById('creditInfo').textContent='Fehler: '+e.message;
+  }
+  document.getElementById('loadBtn').disabled=false;
+}
+
+function renderFixtures(fixtures){
+  var list=document.getElementById('fixtureList');
+  list.innerHTML='';
+  list.style.display='block';
+
+  if(!fixtures.length){
+    list.innerHTML='<div class="fix-item">Keine Spiele gefunden.</div>';
+    return;
+  }
+
+  fixtures.forEach(function(f){
+    var div=document.createElement('div');
+    div.className='fix-item';
+    var ko=f.startTime||f.startsAt||f.date||'';
+    var koStr=ko?new Date(ko).toLocaleString('de-AT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
+    div.innerHTML='<strong>'+f.participant1Name+' vs '+f.participant2Name+'</strong>'
+      +'<div class="fix-meta">'+(f.tournamentName||'')+(koStr?' — '+koStr:'')+'</div>';
+    div.onclick=function(){selectFixture(f,div);};
+    list.appendChild(div);
+  });
+}
+
+function filterFixtures(){
+  var q=document.getElementById('searchQuery').value.trim().toLowerCase();
+  if(!_fixtures.length)return;
+  var filtered=q?_fixtures.filter(function(f){
+    return (f.participant1Name||'').toLowerCase().includes(q)||(f.participant2Name||'').toLowerCase().includes(q)||(f.tournamentName||'').toLowerCase().includes(q);
+  }):_fixtures;
+  renderFixtures(filtered);
+}
+
+function selectFixture(f,el){
+  _selectedFixture=f;
+  document.querySelectorAll('.fix-item').forEach(function(x){x.classList.remove('selected');});
+  el.classList.add('selected');
+  var info=document.getElementById('selectedInfo');
+  info.textContent='✓ Ausgewählt: '+f.participant1Name+' vs '+f.participant2Name+' ('+( f.tournamentName||'')+')';
+  info.style.display='block';
+}
+
+// ══ BETINASIA PARSER ══
+function normHC(hc){
+  var s=hc.toString().trim().replace(/\s+/g,'');
+  var parts=[],current='';
+  for(var i=0;i<s.length;i++){
+    var c=s[i];
+    if(c===','){
+      var pd=i>0&&/\d/.test(s[i-1]);
+      var ns=i<s.length-1&&/[-+\d]/.test(s[i+1]);
+      var hd=current.indexOf('.')!==-1;
+      var nm=i<s.length-1&&s[i+1]==='-';
+      var np=i<s.length-1&&s[i+1]==='+';
+      if(pd&&ns&&(hd||nm||np)){parts.push(current);current='';}
+      else{current+='.';} 
+    } else {current+=c;}
+  }
+  if(current)parts.push(current);
+  return parts.map(function(p){return p.replace(/,/g,'.');}).join(',');
+}
+
+function parseBiasText(text){
+  if(!text||!text.trim())return null;
+  var lines=text.trim().split('\n').map(function(l){return l.trim();}).filter(Boolean);
+  var lines2=lines.filter(function(l){return!/^asian|^handicap|^draw no bet/i.test(l);});
+
+  var abbrevs=[];
+  lines2.forEach(function(l){
+    var m=l.match(/^([A-Za-z]{2,6})\d/);
+    if(m&&abbrevs.indexOf(m[1])===-1)abbrevs.push(m[1]);
+  });
+
+  var homeAbbr=abbrevs[0]||'home';
+  var awayAbbr=abbrevs[1]||'away';
+
+  var result={homeAbbr:homeAbbr,awayAbbr:awayAbbr,lines:[]};
+  var i=0;
+  while(i<lines2.length){
+    var l=lines2[i];
+    if(/^[+\-]?\d/.test(l)&&!/[A-Za-z]/.test(l)){
+      var hc=normHC(l);
+      var homeOdds=null,awayOdds=null;
+      var j=i+1;
+      while(j<lines2.length&&j<=i+3){
+        var lj=lines2[j];
+        if(/^[+\-]?\d/.test(lj)&&!/[A-Za-z]/.test(lj))break;
+        var mH=lj.match(new RegExp('^'+homeAbbr+'(\\d+\\.\\d+)$','i'));
+        var mA=lj.match(new RegExp('^'+awayAbbr+'(\\d+\\.\\d+)$','i'));
+        if(mH)homeOdds=parseFloat(mH[1]);
+        if(mA)awayOdds=parseFloat(mA[1]);
+        j++;
+      }
+      if(homeOdds&&homeOdds>1.001&&homeOdds<200){
+        result.lines.push({handicap:hc,homeOdds:homeOdds,awayOdds:(awayOdds&&awayOdds>1.001&&awayOdds<200)?awayOdds:null});
+        i=j;
+      } else {i++;}
+    } else {i++;}
+  }
+  return result.lines.length>0?result:null;
+}
+
+// ══ AH MARKET IDs (OddsPapi) ══
+var AH_MARKETS={
+  '-3':  {home:'1050',away:'1051'},
+  '-2.5':{home:'1056',away:'1057'},
+  '-2':  {home:'1058',away:'1059'},
+  '-1.75':{home:'1059a',away:'1059b'},
+  '-1.5':{home:'1060',away:'1061'},
+  '-1.25':{home:'1062',away:'1063'},
+  '-1':  {home:'1064',away:'1065'},
+  '-0.75':{home:'1066',away:'1067'},
+  '-0.5':{home:'1068',away:'1069'},
+  '-0.25':{home:'1070',away:'1071'},
+  '0':   {home:'1072',away:'1073'},
+  '+0.25':{home:'1074',away:'1075'},
+  '+0.5':{home:'1076',away:'1077'},
+  '+0.75':{home:'1078',away:'1079'},
+  '+1':  {home:'1080',away:'1081'},
+  '+1.25':{home:'1082',away:'1083'},
+  '+1.5':{home:'1084',away:'1085'},
+  '+2':  {home:'1086',away:'1087'},
+  '+2.5':{home:'1088',away:'1089'},
+  '+3':  {home:'1090',away:'1091'},
+};
+
+// ══ GET REF ODDS FROM ODDSPAPI ══
+async function getRefOdds(fixtureId){
+  var refBook=document.getElementById('refBook').value;
+  var data=await opGet('/odds',{fixtureId:fixtureId});
+
+  // Try to find ref bookmaker odds
+  var bookOrder=[refBook,'bf','sing2','sharp','pin88','sbo'];
+  var refData=null,usedBook='';
+  var bookOdds=data.bookmakerOdds||data;
+
+  for(var i=0;i<bookOrder.length;i++){
+    if(bookOdds[bookOrder[i]]){refData=bookOdds[bookOrder[i]];usedBook=bookOrder[i];break;}
+  }
+
+  // If structure is different, try direct
+  if(!refData&&data.odds){
+    var odds=data.odds;
+    for(var i=0;i<bookOrder.length;i++){
+      if(odds[bookOrder[i]]){refData=odds[bookOrder[i]];usedBook=bookOrder[i];break;}
+    }
+  }
+
+  if(!refData)return{book:'none',lines:{}};
+
+  var result={book:usedBook,lines:{}};
+  var markets=refData.markets||refData||{};
+
+  Object.keys(AH_MARKETS).forEach(function(hc){
+    var mktInfo=AH_MARKETS[hc];
+    var homeMkt=markets[mktInfo.home]||markets['ah_'+hc];
+    var awayMkt=markets[mktInfo.away];
+    var homeOdds=null,awayOdds=null;
+
+    if(homeMkt){
+      var outcomes=homeMkt.outcomes||homeMkt;
+      var ho=outcomes[mktInfo.home]||outcomes['home']||outcomes['1'];
+      if(ho){homeOdds=parseFloat(ho.price||ho.odds||ho);}
+    }
+    if(awayMkt){
+      var outcomes2=awayMkt.outcomes||awayMkt;
+      var ao=outcomes2[mktInfo.away]||outcomes2['away']||outcomes2['2'];
+      if(ao){awayOdds=parseFloat(ao.price||ao.odds||ao);}
+    }
+
+    if(homeOdds&&awayOdds&&homeOdds>1&&awayOdds>1){
+      result.lines[hc]={home:homeOdds,away:awayOdds};
+    }
+  });
+
+  return result;
+}
+
+// ══ MAIN ANALYSIS ══
+async function analyseAll(){
+  var biaText=document.getElementById('biaText').value.trim();
+  if(!biaText){alert('Bitte Betinasia Text einfügen.');return;}
+  if(!_selectedFixture){alert('Bitte zuerst ein Spiel auswählen (Schritt 1).');return;}
+  if(!document.getElementById('opKey').value.trim()){alert('Bitte OddsPapi API Key eintragen.');return;}
+
+  setStatus('loading','<span class="spinner"></span> Betinasia Text wird geparst...');
+  document.getElementById('resultsSection').style.display='none';
+  document.getElementById('analyseBtn').disabled=true;
+
+  try{
+    var biaData=parseBiasText(biaText);
+    if(!biaData||!biaData.lines.length){
+      setStatus('error','Konnte Betinasia Text nicht lesen.');
+      document.getElementById('analyseBtn').disabled=false;
+      return;
+    }
+
+    var el=document.getElementById('biaExtracted');
+    el.innerHTML='<strong>Gelesen '+biaData.lines.length+' Linien ('+biaData.homeAbbr+' vs '+biaData.awayAbbr+'):</strong> ';
+    biaData.lines.forEach(function(l){el.innerHTML+='<span class="tag">'+l.handicap+'</span>';});
+    el.style.display='block';
+
+    var refBook=document.getElementById('refBook').value;
+    setStatus('loading','<span class="spinner"></span> Hole '+refBook+' Quoten von OddsPapi... (1 Credit)');
+
+    var refOdds=await getRefOdds(_selectedFixture.fixtureId||_selectedFixture.id);
+
+    // Debug: show raw response in console
+    console.log('RefOdds:', JSON.stringify(refOdds).slice(0,500));
+
+    document.getElementById('thRef').textContent=refOdds.book.toUpperCase()+' (Referenz)';
+
+    var linesFound=Object.keys(refOdds.lines).length;
+    if(!linesFound){
+      setStatus('error','Keine Referenzquoten von OddsPapi gefunden. Möglicherweise Free Plan Einschränkung oder falsches Spiel. Versuche einen anderen Referenz-Buchmacher in Settings.');
+      document.getElementById('analyseBtn').disabled=false;
+      return;
+    }
+
+    setStatus('loading','<span class="spinner"></span> '+linesFound+' Referenzlinien gefunden. Berechne EV...');
+
+    var bkr=gv('bankroll'),kPct=gv('kellyPct'),cap=gv('maxCap');
+    var minEV=gv('minEV')/100,suspectThr=gv('suspectThr')/100;
+    var rows=[];
+    var matchName=_selectedFixture.participant1Name+' vs '+_selectedFixture.participant2Name;
+
+    biaData.lines.forEach(function(l){
+      var refLine=refOdds.lines[l.handicap];
+      if(!refLine)return;
+
+      ['home','away'].forEach(function(side){
+        var biaOdds=side==='home'?l.homeOdds:l.awayOdds;
+        var refOddsVal=side==='home'?refLine.home:refLine.away;
+        if(!biaOdds||biaOdds<=1||!refOddsVal||refOddsVal<=1)return;
+
+        var fp=fairProbFromSharp(refLine.home,refLine.away);
+        var trueP=side==='home'?fp.home:fp.away;
+
+        var ev=evPercent(trueP,biaOdds);
+        var rec=bkr>0?recStakeCalc(bkr,trueP,biaOdds,kPct,cap):null;
+        var diff=biaOdds-refOddsVal;
+        var isSuspect=Math.abs(ev)>suspectThr;
+        var hasValue=ev>=minEV&&!isSuspect;
+        var sideLabel=side==='home'?biaData.homeAbbr:biaData.awayAbbr;
+
+        rows.push({
+          hc:l.handicap,side:sideLabel,
+          biaOdds:biaOdds,refOdds:refOddsVal,
+          trueP:trueP,ev:ev,rec:rec,diff:diff,
+          hasValue:hasValue,isSuspect:isSuspect,
+          matchName:matchName,
+          bankroll:bkr,kPct:kPct,maxCap:cap
+        });
+      });
+    });
+
+    rows.sort(function(a,b){
+      if(a.hasValue&&!b.hasValue)return -1;
+      if(!a.hasValue&&b.hasValue)return 1;
+      return b.ev-a.ev;
+    });
+
+    _lastRows=rows;
+    renderResults(rows,biaData,refOdds.book,linesFound);
+
+  }catch(e){
+    setStatus('error','⚠ Fehler: '+e.message);
+  }
+  document.getElementById('analyseBtn').disabled=false;
+}
+
+function renderResults(rows,biaData,usedBook,refLines){
+  var valueBets=rows.filter(function(r){return r.hasValue;});
+  document.getElementById('statsGrid').innerHTML=
+    '<div class="stat-box"><div class="sl">Betinasia Linien</div><div class="sv">'+biaData.lines.length+'</div></div>'+
+    '<div class="stat-box"><div class="sl">Referenz Linien</div><div class="sv">'+refLines+'</div></div>'+
+    '<div class="stat-box"><div class="sl">Verglichen</div><div class="sv">'+rows.length+'</div></div>'+
+    '<div class="stat-box"><div class="sl">Value Bets</div><div class="sv" style="color:var(--green)">'+valueBets.length+'</div></div>'+
+    '<div class="stat-box"><div class="sl">Referenz</div><div class="sv" style="font-size:.75rem;color:var(--blue)">'+usedBook.toUpperCase()+'</div></div>'+
+    '<div class="stat-box"><div class="sl">Bestes EV</div><div class="sv" style="color:var(--green)">'+(valueBets.length?ps(valueBets[0].ev):'--')+'</div></div>';
+
+  var tbody=document.getElementById('resultsBody');tbody.innerHTML='';
+  rows.forEach(function(r,idx){
+    var isBest=idx===0&&r.hasValue;
+    var evCol=r.isSuspect?'color:var(--red)':r.ev>0?'color:var(--green)':'color:var(--red)';
+    var diffStr=r.diff>0?'<span style="color:var(--green)">+'+r.diff.toFixed(3)+'</span>':'<span style="color:var(--red)">'+r.diff.toFixed(3)+'</span>';
+    var signal=r.isSuspect?'<span class="sbadge">⚠ VERIFY</span>':r.hasValue?'<span class="vbadge">BET</span>'+(isBest?'<span class="bbadge">BEST</span>':''):'<span class="nbadge">--</span>';
+
+    var biaInput='<input type="number" id="biae_'+idx+'" value="'+r.biaOdds.toFixed(3)+'" step="0.01" min="1.01" style="width:80px;padding:3px 7px;font-size:.72rem;color:var(--green);font-weight:600;border-color:rgba(0,217,139,.4);" onchange="recalcBia('+idx+',this.value)"/>';
+    var refInput='<input type="number" id="refe_'+idx+'" value="'+r.refOdds.toFixed(3)+'" step="0.01" min="1.01" style="width:80px;padding:3px 7px;font-size:.72rem;" onchange="recalcRef('+idx+',this.value)"/>';
+    var stakeWin='<div style="display:flex;gap:5px;align-items:center;">'
+      +'<input type="number" id="stake_'+idx+'" placeholder="EUR" step="0.5" min="0.5" style="width:62px;padding:3px 6px;font-size:.72rem;" oninput="updateWin('+idx+')" />'
+      +'<span id="win_'+idx+'" style="font-size:.7rem;color:var(--green);white-space:nowrap;min-width:70px;">= --</span>'
+      +'</div>';
+
+    tbody.innerHTML+='<tr id="row_'+idx+'" class="'+(r.isSuspect?'srow':r.hasValue?'vrow':'')+'">'
+      +'<td style="font-weight:600;font-family:var(--mono)">'+r.hc+'</td>'
+      +'<td>'+r.side+'</td>'
+      +'<td>'+biaInput+'<div style="font-size:.6rem;color:var(--green);margin-top:2px;">Bei BIA wetten</div></td>'
+      +'<td>'+refInput+'<div style="font-size:.6rem;color:var(--muted);margin-top:2px;">Nur Referenz</div></td>'
+      +'<td id="diff_'+idx+'">'+diffStr+'</td>'
+      +'<td id="ev_'+idx+'" style="'+evCol+';font-weight:700">'+ps(r.ev)+'</td>'
+      +'<td id="rec_'+idx+'" style="color:var(--green)">'+(r.rec>0?eur(r.rec):'--')+'</td>'
+      +'<td id="sig_'+idx+'">'+signal+'</td>'
+      +'<td>'+stakeWin+'</td>'
+      +'<td><button class="btn btn-sm '+(r.isSuspect?'btn-red':'btn-ghost')+'" onclick="saveRow('+idx+')">'+(r.isSuspect?'⚠ Save':'Save')+'</button></td>'
+      +'</tr>';
+  });
+
+  setStatus('success','✓ Analyse abgeschlossen — '+valueBets.length+' Value Bets gefunden. Referenz: '+usedBook.toUpperCase());
+  document.getElementById('resultsSection').style.display='block';
+  document.getElementById('resultsSection').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function recalcBia(idx,val){
+  var r=_lastRows[idx];if(!r)return;
+  var v=parseFloat(val);if(!v||v<=1)return;
+  r.biaOdds=v;
+  var ev=evPercent(r.trueP,v);
+  var rec=recStakeCalc(r.bankroll||gv('bankroll'),r.trueP,v,r.kPct||gv('kellyPct'),r.maxCap||gv('maxCap'));
+  var diff=v-r.refOdds;
+  var isSuspect=Math.abs(ev)>gv('suspectThr')/100;
+  var hasValue=ev>=gv('minEV')/100&&!isSuspect;
+  r.ev=ev;r.rec=rec;r.diff=diff;r.hasValue=hasValue;r.isSuspect=isSuspect;
+  updateRowUI(idx,ev,rec,diff,isSuspect,hasValue);
+  updateWin(idx);
+}
+
+function recalcRef(idx,val){
+  var r=_lastRows[idx];if(!r)return;
+  var v=parseFloat(val);if(!v||v<=1)return;
+  r.refOdds=v;
+  // Recalc fair prob with new ref — use paired row or approximate
+  var paired=_lastRows.find(function(x,i){return i!==idx&&x.hc===r.hc;});
+  var otherRef=paired?paired.refOdds:v;
+  var homeRef=r.side===_lastRows.find(function(x){return x.hc===r.hc;})||r.side?v:otherRef;
+  var fp=fairProbFromSharp(v,otherRef);
+  r.trueP=fp.home;
+  var ev=evPercent(r.trueP,r.biaOdds);
+  var rec=recStakeCalc(r.bankroll||gv('bankroll'),r.trueP,r.biaOdds,r.kPct||gv('kellyPct'),r.maxCap||gv('maxCap'));
+  var diff=r.biaOdds-v;
+  var isSuspect=Math.abs(ev)>gv('suspectThr')/100;
+  var hasValue=ev>=gv('minEV')/100&&!isSuspect;
+  r.ev=ev;r.rec=rec;r.diff=diff;r.hasValue=hasValue;r.isSuspect=isSuspect;
+  updateRowUI(idx,ev,rec,diff,isSuspect,hasValue);
+}
+
+function updateRowUI(idx,ev,rec,diff,isSuspect,hasValue){
+  var diffStr=diff>0?'<span style="color:var(--green)">+'+diff.toFixed(3)+'</span>':'<span style="color:var(--red)">'+diff.toFixed(3)+'</span>';
+  document.getElementById('diff_'+idx).innerHTML=diffStr;
+  var evCol=isSuspect?'color:var(--red)':ev>0?'color:var(--green)':'color:var(--red)';
+  document.getElementById('ev_'+idx).innerHTML='<span style="'+evCol+';font-weight:700">'+ps(ev)+'</span>';
+  document.getElementById('rec_'+idx).textContent=rec>0?eur(rec):'--';
+  var sig=isSuspect?'<span class="sbadge">⚠ VERIFY</span>':hasValue?'<span class="vbadge">BET</span>':'<span class="nbadge">--</span>';
+  document.getElementById('sig_'+idx).innerHTML=sig;
+  document.getElementById('row_'+idx).className=isSuspect?'srow':hasValue?'vrow':'';
+}
+
+function updateWin(idx){
+  var r=_lastRows[idx];if(!r)return;
+  var s=parseFloat(document.getElementById('stake_'+idx).value);
+  var w=document.getElementById('win_'+idx);
+  if(!s||s<=0){w.textContent='= --';return;}
+  w.textContent='= +EUR '+(s*(r.biaOdds-1)).toFixed(2);
+}
+
+function saveRow(idx){
+  var r=_lastRows[idx];if(!r)return;
+  var stakeEl=document.getElementById('stake_'+idx);
+  var stakeVal=stakeEl?parseFloat(stakeEl.value)||0:0;
+  var bets=loadBets();
+  bets.unshift({
+    id:Date.now(),match:r.matchName,
+    side:r.side+' ('+r.hc+')',hc:r.hc,
+    refOdds:r.refOdds,myOdds:r.biaOdds,
+    ev:r.ev,rec:r.rec,stake:stakeVal,
+    result:'pending',savedAt:new Date().toISOString()
+  });
+  saveBets(bets);renderBets();
+  alert('Gespeichert!\n'+r.side+' ('+r.hc+')\nBetinasia: '+r.biaOdds.toFixed(3)+' | EV: '+ps(r.ev)+'\n\n➡ Bei BETINASIA wetten!');
+}
+
+function setStatus(type,msg){var b=document.getElementById('statusBox');b.className='sbox '+type;b.innerHTML=msg;b.style.display='block';}
+function clearAll(){
+  document.getElementById('biaText').value='';
+  document.getElementById('biaExtracted').style.display='none';
+  document.getElementById('resultsSection').style.display='none';
+  document.getElementById('statusBox').style.display='none';
+  _selectedFixture=null;
+  document.getElementById('selectedInfo').style.display='none';
+  document.querySelectorAll('.fix-item').forEach(function(x){x.classList.remove('selected');});
+}
+
+// ══ SAVED BETS ══
+function loadBets(){try{return JSON.parse(localStorage.getItem('betedge_bets_op')||'[]');}catch(e){return[];}}
+function saveBets(b){localStorage.setItem('betedge_bets_op',JSON.stringify(b));}
+function deleteBet(id){if(!confirm('Löschen?'))return;saveBets(loadBets().filter(function(b){return b.id!==id;}));renderBets();}
+function clearAllBets(){if(!confirm('Alle löschen?'))return;saveBets([]);renderBets();}
+function updateResult(id,r){var bets=loadBets(),b=bets.find(function(x){return x.id===id;});if(b){b.result=r;if(r!=='pending'&&!b.settledAt)b.settledAt=new Date().toISOString();saveBets(bets);renderBets();}}
+function updateStake(id,v){var bets=loadBets(),b=bets.find(function(x){return x.id===id;});if(b){b.stake=parseFloat(v)||0;saveBets(bets);renderBets();}}
+
+function renderBets(){
+  var bets=loadBets(),tbody=document.getElementById('betsBody'),empty=document.getElementById('emptyState');
+  tbody.innerHTML='';
+  if(!bets.length){empty.style.display='block';renderSummary([]);drawGraph([]);return;}
+  empty.style.display='none';
+  bets.forEach(function(b,i){
+    var pnl=calcPnL(b.result,b.stake||0,b.myOdds);
+    var pnlStr=pnl===null?'--':(pnl>=0?'+':'')+eur(pnl);
+    var pnlCol=pnl===null?'':pnl>0?'color:var(--green)':pnl<0?'color:var(--red)':'';
+    var opts=['pending','win','loss','void','half_win','half_loss'].map(function(r){return'<option value="'+r+'"'+(b.result===r?' selected':'')+'>'+r.replace('_',' ')+'</option>';}).join('');
+    var dateStr=b.savedAt?new Date(b.savedAt).toLocaleDateString('de-AT',{day:'2-digit',month:'2-digit'}):'--';
+    tbody.innerHTML+='<tr>'
+      +'<td style="color:var(--muted)">'+(bets.length-i)+'</td>'
+      +'<td><div style="font-weight:600">'+b.side+'</div><div style="font-size:.65rem;color:var(--muted)">'+(b.match||'')+'</div><div style="font-size:.62rem;color:var(--muted)">'+dateStr+'</div></td>'
+      +'<td>'+b.hc+'</td>'
+      +'<td style="color:var(--blue)">'+(b.refOdds?b.refOdds.toFixed(3):'--')+'</td>'
+      +'<td style="font-weight:600">'+b.myOdds.toFixed(3)+'</td>'
+      +'<td style="'+(b.ev>0?'color:var(--green)':'color:var(--red)')+'">'+ps(b.ev)+'</td>'
+      +'<td><input type="number" style="width:72px;padding:3px 6px;font-size:.72rem" value="'+(b.stake||'')+'" placeholder="EUR" onchange="updateStake('+b.id+',this.value)" min="0" step="0.5"/></td>'
+      +'<td style="color:var(--green)">'+(b.rec>0?eur(b.rec):'--')+'</td>'
+      +'<td style="'+pnlCol+';font-weight:700">'+pnlStr+'</td>'
+      +'<td><select style="padding:3px 6px;font-size:.68rem;width:auto;" onchange="updateResult('+b.id+',this.value)">'+opts+'</select></td>'
+      +'<td><button class="btn btn-red btn-sm" onclick="deleteBet('+b.id+')">X</button></td>'
+      +'</tr>';
+  });
+  renderSummary(bets);drawGraph(bets);
+}
+
+function renderSummary(bets){
+  var settled=bets.filter(function(b){return b.result!=='pending';});
+  var wins=bets.filter(function(b){return b.result==='win'||b.result==='half_win';});
+  var ts=bets.reduce(function(s,b){return s+(b.stake||0);},0);
+  var tp=settled.reduce(function(s,b){var p=calcPnL(b.result,b.stake||0,b.myOdds);return s+(p||0);},0);
+  var roi=ts>0?tp/ts*100:null;
+  var wr=settled.length>0?wins.length/settled.length*100:null;
+  document.getElementById('sumTotal').textContent=bets.length;
+  document.getElementById('sumSettled').textContent=settled.length;
+  document.getElementById('sumStaked').textContent=eur(ts);
+  var pe=document.getElementById('sumPnl');pe.textContent=(tp>=0?'+':'')+eur(tp);pe.style.color=tp>0?'var(--green)':tp<0?'var(--red)':'';
+  var re=document.getElementById('sumRoi');re.textContent=roi!==null?(roi>=0?'+':'')+roi.toFixed(1)+'%':'--';re.style.color=roi>0?'var(--green)':roi<0?'var(--red)':'';
+  document.getElementById('sumWR').textContent=wr!==null?wr.toFixed(0)+'%':'--';
+}
+
+function drawGraph(bets){
+  var canvas=document.getElementById('pnlChart'),ge=document.getElementById('graphEmpty');
+  var settled=bets.filter(function(b){return b.result!=='pending';}).sort(function(a,b){return new Date(a.settledAt||a.savedAt)-new Date(b.settledAt||b.savedAt);});
+  if(!settled.length){canvas.style.display='none';ge.style.display='block';return;}
+  canvas.style.display='block';ge.style.display='none';
+  var startBkr=gv('bankroll')||500;
+  var pts=[startBkr];var run=startBkr;
+  settled.forEach(function(b){var p=calcPnL(b.result,b.stake||0,b.myOdds)||0;run+=p;pts.push(run);});
+  var W=canvas.offsetWidth||800,H=90,dpr=window.devicePixelRatio||1;
+  canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+'px';canvas.style.height=H+'px';
+  var ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+  var pad={t:6,r:12,b:20,l:52},cW=W-pad.l-pad.r,cH=H-pad.t-pad.b;
+  var mn=Math.min.apply(null,pts),mx=Math.max.apply(null,pts),range=mx-mn||1;
+  mn-=range*.1;mx+=range*.1;range=mx-mn;
+  function cx(i){return pad.l+(i/(pts.length-1||1))*cW;}
+  function cy(v){return pad.t+cH-(v-mn)/range*cH;}
+  ctx.strokeStyle='rgba(30,42,61,.8)';ctx.lineWidth=1;
+  for(var g=0;g<=3;g++){var gy=pad.t+(g/3)*cH;ctx.beginPath();ctx.moveTo(pad.l,gy);ctx.lineTo(pad.l+cW,gy);ctx.stroke();ctx.fillStyle='#4a5a78';ctx.font='8px monospace';ctx.textAlign='right';ctx.fillText((mx-(g/3)*range).toFixed(0),pad.l-3,gy+4);}
+  var lp=pts[pts.length-1],lc=lp>=startBkr?'#00d98b':'#ff3d5a';
+  ctx.beginPath();ctx.moveTo(cx(0),cy(pts[0]));for(var i=1;i<pts.length;i++)ctx.lineTo(cx(i),cy(pts[i]));ctx.strokeStyle=lc;ctx.lineWidth=2;ctx.stroke();
+  for(var i=0;i<pts.length;i++){ctx.beginPath();ctx.arc(cx(i),cy(pts[i]),3,0,Math.PI*2);ctx.fillStyle=i===0?'#4a5a78':(pts[i]>=(i>0?pts[i-1]:pts[0])?'#00d98b':'#ff3d5a');ctx.fill();}
+}
+
+function exportCSV(){
+  var bets=loadBets();if(!bets.length){alert('Keine Wetten.');return;}
+  var rows=[['#','Datum','Match','Seite','HC','Referenz','Betinasia','EV%','Einsatz','Empfohlen','PnL','Ergebnis']];
+  bets.forEach(function(b,i){var pnl=calcPnL(b.result,b.stake||0,b.myOdds);rows.push([bets.length-i,b.savedAt?new Date(b.savedAt).toLocaleDateString('de-AT'):'',b.match,b.side,b.hc,b.refOdds?b.refOdds.toFixed(3):'',b.myOdds.toFixed(3),(b.ev*100).toFixed(2)+'%',b.stake||0,b.rec?b.rec.toFixed(2):'',pnl!=null?pnl.toFixed(2):'pending',b.result]);});
+  var csv=rows.map(function(r){return r.map(function(c){return'"'+String(c).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
+  var a=document.createElement('a');a.href='data:text/csv,'+encodeURIComponent(csv);a.download='betedge_op_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+}
+
+loadSettings();loadKeys();renderBets();
+</script>
+</body>
+</html>
