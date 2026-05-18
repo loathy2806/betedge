@@ -677,11 +677,15 @@ async function analyseAll(){
           );
         }
 
-        // Combined score: EV * AH win probability boost
+        // Combined score: EV weighted by AH win probability
+        // Penalize heavily if AH win% is very low (under 20%)
         var combinedScore=ev;
         if(ahProb!==null){
-          // Boost score if high win prob, penalize if low
-          combinedScore=ev*(0.5+ahProb);
+          if(ahProb<0.20){
+            combinedScore=ev*ahProb; // heavy penalty for low win prob
+          } else {
+            combinedScore=ev*(0.4+ahProb); // boost for high win prob
+          }
         }
 
         rows.push({
@@ -919,6 +923,8 @@ function setStatus(type,msg){
 }
 function clearAll(){
   document.getElementById('biaText').value='';
+  document.getElementById('winProbText').value='';
+  document.getElementById('winProbExtracted').style.display='none';
   _b365Image=null;_b365Type=null;
   document.getElementById('prevB365').style.display='none';
   document.getElementById('b365dz').querySelector('input').value='';
