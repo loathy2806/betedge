@@ -516,7 +516,21 @@ async function analyseAll(){
   document.getElementById('resultsSection').style.display='none';
   document.getElementById('analyseBtn').disabled=true;
 
+  var winProb=null;
+
   try{
+    // Step 0: Parse Win Probability (optional)
+    var winProbText=document.getElementById('winProbText').value.trim();
+    winProb=winProbText?parseWinProb(winProbText):null;
+    if(winProb){
+      var wpEl=document.getElementById('winProbExtracted');
+      wpEl.innerHTML='<strong>Win Probability:</strong> '
+        +'<span style="color:var(--green)">'+winProb.homeTeam+' '+winProb.homeProb+'%</span> | '
+        +'<span style="color:var(--muted)">Draw '+winProb.drawProb+'%</span> | '
+        +'<span style="color:var(--amber)">'+winProb.awayTeam+' '+winProb.awayProb+'%</span>';
+      wpEl.style.display='block';
+    }
+
     // Step 1: Parse Betinasia
     var biaData=parseBiasText(biaText);
     if(!biaData||!biaData.lines.length){
