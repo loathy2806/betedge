@@ -137,8 +137,16 @@ hr{border:none;border-top:1px solid var(--border);margin:20px 0;}
 <!-- INPUT -->
 <div class="stitle">Schritt 1 — Daten eingeben</div>
 <div class="info">
-  <strong>Links:</strong> Betinasia Asian Handicap Text kopieren &amp; einfügen — hier wettest du.<br>
-  <strong>Rechts:</strong> Bet365 Asian Handicap Screenshot hochladen — nur als Referenz zum Vergleich.
+  <strong>1.</strong> Betinasia Win Probability kopieren &amp; einfügen.<br>
+  <strong>2.</strong> Betinasia Asian Handicap Text kopieren &amp; einfügen.<br>
+  <strong>3.</strong> Bet365 Screenshot hochladen.
+</div>
+<div class="card" style="margin-bottom:10px;">
+  <div class="field">
+    <label>Win Probability (von Betinasia kopieren)</label>
+    <textarea id="winProbText" style="min-height:80px;" placeholder="Head to Head&#10;1/3&#10;Win Probability&#10;9&#10;%&#10;STA&#10;13&#10;%&#10;Draw&#10;78&#10;%&#10;BOG&#10;..."></textarea>
+  </div>
+  <div id="winProbExtracted" style="margin-top:6px;font-size:.68rem;display:none;"></div>
 </div>
 <div class="panels">
   <!-- Betinasia -->
@@ -189,6 +197,7 @@ hr{border:none;border-top:1px solid var(--border);margin:20px 0;}
             <th>EV%</th>
             <th>Rec. Stake</th>
             <th>Signal</th>
+            <th>AH Win%</th>
             <th>Einsatz / Gewinn</th>
             <th>Save</th>
           </tr>
@@ -331,6 +340,68 @@ function normHC(hc){
   }
   if(current)parts.push(current);
   return parts.map(function(p){return p.replace(/,/g,'.');}).join(',');
+}
+
+function parseWinProb(text){
+  if(!text||!text.trim())return null;
+  var lines=text.trim().split('\n').map(function(l){return l.trim();}).filter(Boolean);
+
+  // Extract numbers and team names
+  // Format: number % teamname number % Draw number % teamname
+  var numbers=[];
+  var teams=[];
+
+  lines.forEach(function(l){
+    // Pure number
+    if(/^\d+$/.test(l))numbers.push(parseInt(l));
+    // Team name (not %, not "Draw", not "Win Probability", not "Head to Head")
+    if(/^[A-Za-z]{2,}/.test(l)&&!/^(Win|Probability|Head|Draw|Previous|Wins|Draws|Meetings|to|%)/i.test(l)){
+      teams.push(l);
+    }
+  });
+
+  // We expect: homeProb, drawProb, awayProb
+  // Teams: home, away
+  if(numbers.length>=3){
+    var result={
+      homeTeam:teams[0]||'Home',
+      awayTeam:teams[1]||'Away',
+      homeProb:numbers[0],
+      drawProb:numbers[1],
+      awayProb:numbers[2]
+    };
+    // Validate — should sum to ~100
+    var sum=result.homeProb+result.drawProb+result.awayProb;
+    if(sum>=85&&sum<=115)return result;
+  }
+  return null;
+}
+
+// Calculate win probability for a specific AH line given match probs
+function ahWinProb(handicap, side, homeProb, drawProb, awayProb){
+  // Convert match result probs to AH win prob
+  // This is a simplified model
+  var h=homeProb/100, d=drawProb/100, a=awayProb/100;
+  var hc=parseFloat(handicap);
+
+  if(side==='home'){
+    if(hc<=-2)return h*0.6; // Home needs to win by big margin
+    if(hc===-1.5)return h*0.75;
+    if(hc===-1)return h*0.85;
+    if(hc===-0.5)return h; // Home just needs to win
+    if(hc===0)return h+d*0.5; // Home wins or draw
+    if(hc>=0.5)return h+d; // Home wins or draws
+    if(hc>=1)return h+d+a*0.3;
+  } else {
+    if(hc>=2)return a*0.6;
+    if(hc===1.5)return a*0.75;
+    if(hc===1)return a*0.85;
+    if(hc===0.5)return a+d; // Away wins or draws
+    if(hc===0)return a+d*0.5;
+    if(hc<=-0.5)return a;
+    if(hc<=-1)return a*0.85;
+  }
+  return 0.5; // fallback
 }
 
 function parseBiasText(text){
@@ -580,15 +651,36 @@ async function analyseAll(){
         var hasValue=ev>=minEV&&!isSuspect;
         var sideLabel=side==='home'?biaData.homeAbbr:biaData.awayAbbr;
 
+        // Calculate AH win probability from match probs if available
+        var ahProb=null;
+        if(winProb){
+          ahProb=ahWinProb(
+            parseFloat(l.handicap),
+            side,
+            winProb.homeProb,
+            winProb.drawProb,
+            winProb.awayProb
+          );
+        }
+
+        // Combined score: EV * AH win probability boost
+        var combinedScore=ev;
+        if(ahProb!==null){
+          // Boost score if high win prob, penalize if low
+          combinedScore=ev*(0.5+ahProb);
+        }
+
         rows.push({
           hc:l.handicap,
           side:sideLabel,
           biaOdds:biaOdds,
           b365Odds:b365Odds,
-          b365OddsEdit:b365Odds, // editable copy
+          b365OddsEdit:b365Odds,
           trueP:trueP,
           ev:ev,rec:rec,diff:diff,
           hasValue:hasValue,isSuspect:isSuspect,
+          ahProb:ahProb,
+          combinedScore:combinedScore,
           matchName:matchName,
           bankroll:bkr,kPct:kPct,maxCap:cap
         });
@@ -599,7 +691,7 @@ async function analyseAll(){
     rows.sort(function(a,b){
       if(a.hasValue&&!b.hasValue)return -1;
       if(!a.hasValue&&b.hasValue)return 1;
-      return b.ev-a.ev;
+      return b.combinedScore-a.combinedScore;
     });
 
     _lastRows=rows;
@@ -656,6 +748,7 @@ function renderResults(rows,biaData,b365Data){
       +'<td id="ev_'+idx+'" style="'+evCol+';font-weight:700">'+ps(r.ev)+'</td>'
       +'<td id="rec_'+idx+'" style="color:var(--green)">'+(r.rec>0?eur(r.rec):'--')+'</td>'
       +'<td id="sig_'+idx+'">'+signal+'</td>'
+      +'<td id="ahp_'+idx+'" style="'+(r.ahProb!==null?(r.ahProb>=0.65?'color:var(--green)':r.ahProb>=0.45?'color:var(--amber)':'color:var(--red)'):'color:var(--muted)')+';font-weight:600">'+(r.ahProb!==null?(r.ahProb*100).toFixed(0)+'%':'--')+'</td>'
       +'<td>'+stakeWin+'</td>'
       +'<td><button class="btn btn-sm '+(r.isSuspect?'btn-red':'btn-ghost')+'" onclick="saveRow('+idx+')">'+(r.isSuspect?'⚠ Save':'Save')+'</button></td>'
       +'</tr>';
