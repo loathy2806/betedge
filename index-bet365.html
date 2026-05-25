@@ -211,6 +211,67 @@ hr{border:none;border-top:1px solid var(--border);margin:20px 0;}
 
 <hr/>
 
+<!-- ARB CALCULATOR -->
+<div class="stitle">⚖️ Arbitrage Rechner</div>
+<div class="card">
+  <div class="info" style="margin-bottom:12px;">
+    Gib beide Seiten desselben Spiels ein (z.B. Team A <strong>-0.5</strong> und Team B <strong>-0.5</strong>). Nur x.5 Linien empfohlen — kein Push möglich.
+  </div>
+  <div class="row" style="margin-bottom:10px;">
+    <div class="field" style="flex:2;min-width:160px;">
+      <label>Spiel (optional)</label>
+      <input type="text" id="arbMatch" placeholder="z.B. Arsenal vs Chelsea"/>
+    </div>
+    <div class="field" style="flex:1;min-width:100px;">
+      <label>Linie</label>
+      <input type="text" id="arbLine" placeholder="z.B. -0.5"/>
+    </div>
+    <div class="field" style="flex:1;min-width:100px;">
+      <label>Bankroll (EUR)</label>
+      <input type="number" id="arbBankroll" value="500" step="10"/>
+    </div>
+  </div>
+  <div class="panels" style="margin-bottom:10px;">
+    <div class="panel">
+      <div class="panel-hdr blue">Team A</div>
+      <div class="panel-body">
+        <div class="row">
+          <div class="field">
+            <label>Bookie</label>
+            <input type="text" id="arbBookieA" placeholder="z.B. bf"/>
+          </div>
+          <div class="field">
+            <label>Quote</label>
+            <input type="number" id="arbOddsA" placeholder="z.B. 2.10" step="0.01" min="1.01"/>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-hdr amber">Team B</div>
+      <div class="panel-body">
+        <div class="row">
+          <div class="field">
+            <label>Bookie</label>
+            <input type="text" id="arbBookieB" placeholder="z.B. pin88"/>
+          </div>
+          <div class="field">
+            <label>Quote</label>
+            <input type="number" id="arbOddsB" placeholder="z.B. 2.10" step="0.01" min="1.01"/>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:10px;">
+    <button class="btn btn-green" onclick="calcArb()">⚖️ Berechnen</button>
+    <button class="btn btn-ghost" onclick="clearArb()">Clear</button>
+  </div>
+  <div id="arbResult" style="display:none;"></div>
+</div>
+
+<hr/>
+
 <!-- SAVED BETS -->
 <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
   <div class="stitle" style="margin:0;">Gespeicherte Wetten</div>
@@ -1058,6 +1119,76 @@ function exportCSV(){
   a.href=URL.createObjectURL(blob);
   a.download='betedge_'+new Date().toISOString().slice(0,10)+'.csv';
   a.click();
+}
+
+// ══ ARB CALCULATOR ══
+function calcArb(){
+  var oddsA=parseFloat(document.getElementById('arbOddsA').value);
+  var oddsB=parseFloat(document.getElementById('arbOddsB').value);
+  var bankroll=parseFloat(document.getElementById('arbBankroll').value)||500;
+  var bookieA=document.getElementById('arbBookieA').value.trim()||'Bookie A';
+  var bookieB=document.getElementById('arbBookieB').value.trim()||'Bookie B';
+  var line=document.getElementById('arbLine').value.trim()||'--';
+  var match=document.getElementById('arbMatch').value.trim()||'';
+  var el=document.getElementById('arbResult');
+
+  if(!oddsA||oddsA<=1||!oddsB||oddsB<=1){
+    el.style.display='block';
+    el.innerHTML='<div class="warn">⚠ Bitte beide Quoten eingeben (jeweils über 1.00).</div>';
+    return;
+  }
+
+  var impliedSum=1/oddsA+1/oddsB;
+  var arbPct=(1-impliedSum)*100;
+  var isArb=impliedSum<1;
+
+  // Optimal stakes
+  var stakeA=bankroll*(1/oddsA)/impliedSum;
+  var stakeB=bankroll*(1/oddsB)/impliedSum;
+  var profitA=stakeA*(oddsA-1)-stakeB;
+  var profitB=stakeB*(oddsB-1)-stakeA;
+  var guaranteedProfit=bankroll*(1/impliedSum)-bankroll;
+
+  var html='';
+  if(isArb){
+    html+='<div class="sbox success" style="display:block;margin-bottom:10px;">';
+    html+='<strong>✅ ARB GEFUNDEN!</strong> ';
+    html+='Garantierter Profit: <strong>+EUR '+guaranteedProfit.toFixed(2)+'</strong> ('+arbPct.toFixed(2)+'%)</div>';
+  } else {
+    html+='<div class="sbox error" style="display:block;margin-bottom:10px;">';
+    html+='<strong>❌ Kein Arb.</strong> ';
+    html+='Implied Sum: '+(impliedSum*100).toFixed(2)+'% — braucht unter 100% für Arb.</div>';
+  }
+
+  html+='<div class="stat-grid">';
+  html+='<div class="stat-box"><div class="sl">Implied Sum</div><div class="sv" style="color:'+(isArb?'var(--green)':'var(--red)')+'">'+( impliedSum*100).toFixed(2)+'%</div></div>';
+  html+='<div class="stat-box"><div class="sl">Arb %</div><div class="sv" style="color:'+(isArb?'var(--green)':'var(--muted)')+'">'+( isArb?'+'+arbPct.toFixed(2)+'%':'--')+'</div></div>';
+  html+='<div class="stat-box"><div class="sl">Einsatz Gesamt</div><div class="sv">EUR '+bankroll.toFixed(2)+'</div></div>';
+  html+='<div class="stat-box"><div class="sl">Garantierter Profit</div><div class="sv" style="color:'+(isArb?'var(--green)':'var(--muted)')+'">'+( isArb?'+EUR '+guaranteedProfit.toFixed(2):'--')+'</div></div>';
+  html+='</div>';
+
+  html+='<div class="card" style="padding:0;overflow:hidden;margin-top:8px;">';
+  html+='<table class="rtbl"><thead><tr><th>Team</th><th>Linie</th><th>Bookie</th><th>Quote</th><th>Einsatz</th><th>Gewinn wenn gewinnt</th></tr></thead><tbody>';
+  html+='<tr><td style="color:var(--blue);font-weight:600">Team A</td><td>'+line+'</td><td>'+bookieA+'</td><td style="font-weight:600">'+oddsA.toFixed(3)+'</td><td style="color:var(--green)">EUR '+stakeA.toFixed(2)+'</td><td style="color:var(--green)">+EUR '+(stakeA*(oddsA-1)).toFixed(2)+'</td></tr>';
+  html+='<tr><td style="color:var(--amber);font-weight:600">Team B</td><td>'+line+'</td><td>'+bookieB+'</td><td style="font-weight:600">'+oddsB.toFixed(3)+'</td><td style="color:var(--green)">EUR '+stakeB.toFixed(2)+'</td><td style="color:var(--green)">+EUR '+(stakeB*(oddsB-1)).toFixed(2)+'</td></tr>';
+  html+='</tbody></table></div>';
+
+  if(isArb){
+    html+='<div class="warn" style="margin-top:8px;">⚠ Beide Wetten so schnell wie möglich nacheinander platzieren! Platziere Team A zuerst, dann sofort Team B.</div>';
+  }
+
+  el.style.display='block';
+  el.innerHTML=html;
+}
+
+function clearArb(){
+  document.getElementById('arbMatch').value='';
+  document.getElementById('arbLine').value='';
+  document.getElementById('arbOddsA').value='';
+  document.getElementById('arbOddsB').value='';
+  document.getElementById('arbBookieA').value='';
+  document.getElementById('arbBookieB').value='';
+  document.getElementById('arbResult').style.display='none';
 }
 
 // ══ INIT ══
