@@ -270,6 +270,70 @@ hr{border:none;border-top:1px solid var(--border);margin:20px 0;}
   <div id="arbResult" style="display:none;"></div>
 </div>
 
+<!-- 3-WAY ARB CALCULATOR -->
+<div class="stitle">🔺 3-Wege Arbitrage (1x2)</div>
+<div class="card">
+  <div class="info" style="margin-bottom:12px;">
+    Gib alle drei Ausgänge ein (Home / Draw / Away) — von verschiedenen Bookies. Formel: <strong>1/Home + 1/Draw + 1/Away &lt; 1.0</strong>
+  </div>
+  <div class="row" style="margin-bottom:10px;">
+    <div class="field" style="flex:2;min-width:160px;">
+      <label>Spiel (optional)</label>
+      <input type="text" id="arb3Match" placeholder="z.B. Korea vs Czech Republic"/>
+    </div>
+    <div class="field" style="flex:1;min-width:100px;">
+      <label>Bankroll (EUR)</label>
+      <input type="number" id="arb3Bankroll" value="500" step="10"/>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
+    <div class="panel">
+      <div class="panel-hdr blue">🏠 Home Win</div>
+      <div class="panel-body">
+        <div class="field" style="margin-bottom:6px;">
+          <label>Bookie</label>
+          <input type="text" id="arb3BookieH" placeholder="z.B. bf"/>
+        </div>
+        <div class="field">
+          <label>Quote</label>
+          <input type="number" id="arb3OddsH" placeholder="z.B. 2.783" step="0.001" min="1.01"/>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-hdr" style="background:rgba(100,100,200,.1);color:#9999ff;">🤝 Draw</div>
+      <div class="panel-body">
+        <div class="field" style="margin-bottom:6px;">
+          <label>Bookie</label>
+          <input type="text" id="arb3BookieD" placeholder="z.B. pin88"/>
+        </div>
+        <div class="field">
+          <label>Quote</label>
+          <input type="number" id="arb3OddsD" placeholder="z.B. 3.156" step="0.001" min="1.01"/>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-hdr amber">✈️ Away Win</div>
+      <div class="panel-body">
+        <div class="field" style="margin-bottom:6px;">
+          <label>Bookie</label>
+          <input type="text" id="arb3BookieA" placeholder="z.B. mbook"/>
+        </div>
+        <div class="field">
+          <label>Quote</label>
+          <input type="number" id="arb3OddsA" placeholder="z.B. 2.862" step="0.001" min="1.01"/>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:10px;">
+    <button class="btn btn-green" onclick="calc3Arb()">🔺 Berechnen</button>
+    <button class="btn btn-ghost" onclick="clear3Arb()">Clear</button>
+  </div>
+  <div id="arb3Result" style="display:none;"></div>
+</div>
+
 <hr/>
 
 <!-- SAVED BETS -->
@@ -1189,6 +1253,66 @@ function clearArb(){
   document.getElementById('arbBookieA').value='';
   document.getElementById('arbBookieB').value='';
   document.getElementById('arbResult').style.display='none';
+}
+
+// ══ 3-WAY ARB CALCULATOR ══
+function calc3Arb(){
+  var oddsH=parseFloat(document.getElementById('arb3OddsH').value);
+  var oddsD=parseFloat(document.getElementById('arb3OddsD').value);
+  var oddsA=parseFloat(document.getElementById('arb3OddsA').value);
+  var bankroll=parseFloat(document.getElementById('arb3Bankroll').value)||500;
+  var bookieH=document.getElementById('arb3BookieH').value.trim()||'Bookie H';
+  var bookieD=document.getElementById('arb3BookieD').value.trim()||'Bookie D';
+  var bookieA=document.getElementById('arb3BookieA').value.trim()||'Bookie A';
+  var el=document.getElementById('arb3Result');
+
+  if(!oddsH||oddsH<=1||!oddsD||oddsD<=1||!oddsA||oddsA<=1){
+    el.style.display='block';
+    el.innerHTML='<div class="warn">⚠ Bitte alle drei Quoten eingeben (jeweils über 1.00).</div>';
+    return;
+  }
+
+  var impliedSum=1/oddsH+1/oddsD+1/oddsA;
+  var arbPct=(1-impliedSum)*100;
+  var isArb=impliedSum<1;
+
+  var stakeH=bankroll*(1/oddsH)/impliedSum;
+  var stakeD=bankroll*(1/oddsD)/impliedSum;
+  var stakeA=bankroll*(1/oddsA)/impliedSum;
+  var guaranteedProfit=bankroll*(1/impliedSum)-bankroll;
+
+  var html='';
+  if(isArb){
+    html+='<div class="sbox success" style="display:block;margin-bottom:10px;"><strong>✅ ARB GEFUNDEN!</strong> Garantierter Profit: <strong>+EUR '+guaranteedProfit.toFixed(2)+'</strong> ('+arbPct.toFixed(2)+'%)</div>';
+  } else {
+    html+='<div class="sbox error" style="display:block;margin-bottom:10px;"><strong>❌ Kein Arb.</strong> Implied Sum: '+(impliedSum*100).toFixed(2)+'% — braucht unter 100%.</div>';
+  }
+
+  html+='<div class="stat-grid">';
+  html+='<div class="stat-box"><div class="sl">Implied Sum</div><div class="sv" style="color:'+(isArb?'var(--green)':'var(--red)')+'">'+( impliedSum*100).toFixed(2)+'%</div></div>';
+  html+='<div class="stat-box"><div class="sl">Arb %</div><div class="sv" style="color:'+(isArb?'var(--green)':'var(--muted)')+'">'+( isArb?'+'+arbPct.toFixed(2)+'%':'--')+'</div></div>';
+  html+='<div class="stat-box"><div class="sl">Bankroll</div><div class="sv">EUR '+bankroll.toFixed(2)+'</div></div>';
+  html+='<div class="stat-box"><div class="sl">Garantierter Profit</div><div class="sv" style="color:'+(isArb?'var(--green)':'var(--muted)')+'">'+( isArb?'+EUR '+guaranteedProfit.toFixed(2):'--')+'</div></div>';
+  html+='</div>';
+
+  html+='<div class="card" style="padding:0;overflow:hidden;margin-top:8px;">';
+  html+='<table class="rtbl"><thead><tr><th>Ausgang</th><th>Bookie</th><th>Quote</th><th>Einsatz</th><th>Profit wenn gewinnt</th></tr></thead><tbody>';
+  html+='<tr><td style="color:var(--blue);font-weight:600">🏠 Home Win</td><td>'+bookieH+'</td><td style="font-weight:600">'+oddsH.toFixed(3)+'</td><td style="color:var(--green)">EUR '+stakeH.toFixed(2)+'</td><td style="color:var(--green)">+EUR '+(stakeH*(oddsH-1)-stakeD-stakeA).toFixed(2)+'</td></tr>';
+  html+='<tr><td style="color:#9999ff;font-weight:600">🤝 Draw</td><td>'+bookieD+'</td><td style="font-weight:600">'+oddsD.toFixed(3)+'</td><td style="color:var(--green)">EUR '+stakeD.toFixed(2)+'</td><td style="color:var(--green)">+EUR '+(stakeD*(oddsD-1)-stakeH-stakeA).toFixed(2)+'</td></tr>';
+  html+='<tr><td style="color:var(--amber);font-weight:600">✈️ Away Win</td><td>'+bookieA+'</td><td style="font-weight:600">'+oddsA.toFixed(3)+'</td><td style="color:var(--green)">EUR '+stakeA.toFixed(2)+'</td><td style="color:var(--green)">+EUR '+(stakeA*(oddsA-1)-stakeH-stakeD).toFixed(2)+'</td></tr>';
+  html+='</tbody></table></div>';
+
+  if(isArb){
+    html+='<div class="warn" style="margin-top:8px;">⚠ Alle drei Wetten so schnell wie möglich nacheinander platzieren!</div>';
+  }
+
+  el.style.display='block';
+  el.innerHTML=html;
+}
+
+function clear3Arb(){
+  ['arb3Match','arb3BookieH','arb3BookieD','arb3BookieA','arb3OddsH','arb3OddsD','arb3OddsA'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('arb3Result').style.display='none';
 }
 
 // ══ INIT ══
